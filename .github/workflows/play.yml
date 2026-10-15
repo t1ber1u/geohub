@@ -18,7 +18,7 @@ jobs:
     env:
       MONGO_URI: mongodb://localhost:27017
       DB_NAME: geohub
-      NEXT_PUBLIC_GOOGLE_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+      NEXT_PUBLIC_GOOGLE_API_KEY: AIzaSyCGXXVlycRXKp4Xb53stG9srlxcIt7kj48
       RESEND_API_KEY: unused
     steps:
       - uses: actions/checkout@v4
@@ -27,12 +27,6 @@ jobs:
         with:
           node-version: 22
           cache: yarn
-
-      - name: Check secret
-        run: |
-          if [ -z "$NEXT_PUBLIC_GOOGLE_API_KEY" ]; then
-            echo "::error::Add a repo secret named GOOGLE_MAPS_API_KEY (Settings > Secrets and variables > Actions)"; exit 1
-          fi
 
       - run: yarn install --frozen-lockfile
 
