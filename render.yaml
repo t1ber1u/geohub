@@ -1,0 +1,26 @@
+# Render Blueprint: New > Blueprint > pick this repo. Database lives in MongoDB Atlas (free M0).
+services:
+  - type: web
+    name: geohub
+    runtime: docker
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: NEXT_PUBLIC_GOOGLE_API_KEY
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: DB_NAME
+        value: geohub
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: CRYPTR_SECRET
+        generateValue: true
+      - key: INTERNAL_API_SECRET
+        generateValue: true
+      - key: CRON_SECRET
+        generateValue: true
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: RESEND_API_KEY
+        value: unused
