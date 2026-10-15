@@ -1,0 +1,72 @@
+# Runs the whole game (app + MongoDB) inside a GitHub Actions job and exposes it through a
+# Cloudflare quick tunnel. Start it from Actions > "Play GeoHub" > Run workflow.
+# The public URL is shown in the job summary. Everything (incl. accounts/scores) is wiped when the job ends (max 6h).
+name: Play GeoHub
+
+on:
+  workflow_dispatch:
+
+jobs:
+  play:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    env:
+      MONGO_URI: mongodb://localhost:27017
+      DB_NAME: geohub
+      NEXT_PUBLIC_GOOGLE_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+      RESEND_API_KEY: unused
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Check secret
+        run: |
+          if [ -z "$NEXT_PUBLIC_GOOGLE_API_KEY" ]; then
+            echo "::error::Add a repo secret named GOOGLE_MAPS_API_KEY (Settings > Secrets and variables > Actions)"; exit 1
+          fi
+
+      - run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build
+
+      - name: Seed database
+        run: node scripts/seed.js
+
+      - name: Open tunnel
+        run: |
+          curl -sSL -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x cloudflared
+          nohup ./cloudflared tunnel --no-autoupdate --url http://localhost:3000 > tunnel.log 2>&1 &
+          for i in $(seq 1 30); do
+            URL=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' tunnel.log | head -1 || true)
+            [ -n "$URL" ] && break
+            sleep 2
+          done
+          [ -n "$URL" ] || { cat tunnel.log; echo "::error::tunnel did not start"; exit 1; }
+          echo "NEXTAUTH_URL=$URL" >> "$GITHUB_ENV"
+          echo "### 🌍 Play GeoHub: $URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "Up for up to ~6 hours. Data is wiped when the job ends." >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice title=GeoHub is live::$URL"
+
+      - name: Run game (up to ~5h50m)
+        env:
+          NEXTAUTH_SECRET: ${{ github.run_id }}-${{ github.sha }}-nextauth
+          CRYPTR_SECRET: ${{ github.run_id }}-${{ github.sha }}-cryptr
+          INTERNAL_API_SECRET: ${{ github.run_id }}-internal
+          CRON_SECRET: ${{ github.run_id }}-cron
+        run: |
+          yarn start &
+          for i in $(seq 1 30); do curl -sf localhost:3000 >/dev/null && break; sleep 2; done
+          # create today's daily challenge
+          curl -s -H "authorization: $CRON_SECRET" localhost:3000/api/cron/create-daily-challenge || true
+          sleep 20990
