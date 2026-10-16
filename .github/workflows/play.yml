@@ -18,7 +18,7 @@ jobs:
     env:
       MONGO_URI: mongodb://localhost:27017
       DB_NAME: geohub
-      NEXT_PUBLIC_GOOGLE_API_KEY: AIzaSyCGXXVlycRXKp4Xb53stG9srlxcIt7kj48
+      NEXT_PUBLIC_GOOGLE_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
       RESEND_API_KEY: unused
     steps:
       - uses: actions/checkout@v4
