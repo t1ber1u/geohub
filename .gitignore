@@ -35,4 +35,4 @@ yarn-error.log*
 .vercel
 
 # docker volumes
-database/
+database/*.tsbuildinfo
