@@ -2,10 +2,11 @@ import { useRef, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '@redux/hook'
 import { updateGuessMapSize } from '@redux/slices'
 import { getGuessMapSize } from '@utils/helpers'
+import { COLLAPSED_GUESS_MAP_SIZE } from '@utils/helpers/getGuessMapSize'
 
 const useGuessMap = () => {
-  const [mapHeight, setMapHeight] = useState(15) // height in vh
-  const [mapWidth, setMapWidth] = useState(15) // width in vw
+  const [mapHeight, setMapHeight] = useState(COLLAPSED_GUESS_MAP_SIZE.height) // height in vh
+  const [mapWidth, setMapWidth] = useState(COLLAPSED_GUESS_MAP_SIZE.width) // width in vw
   const [hovering, setHovering] = useState(false)
   const [isPinned, setIsPinned] = useState(false)
 
@@ -15,7 +16,7 @@ const useGuessMap = () => {
   const dispatch = useAppDispatch()
 
   const handleMapHover = () => {
-    clearInterval(hoverDelay.current)
+    clearTimeout(hoverDelay.current)
     setHovering(true)
 
     const { width, height } = getGuessMapSize(user.guessMapSize as number)
@@ -28,9 +29,9 @@ const useGuessMap = () => {
 
     hoverDelay.current = setTimeout(() => {
       setHovering(false)
-      setMapHeight(15)
-      setMapWidth(15)
-    }, 700)
+      setMapHeight(COLLAPSED_GUESS_MAP_SIZE.height)
+      setMapWidth(COLLAPSED_GUESS_MAP_SIZE.width)
+    }, 1500)
   }
 
   const changeMapSize = (change: 'increase' | 'decrease') => {

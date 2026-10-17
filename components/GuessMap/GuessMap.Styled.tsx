@@ -41,6 +41,8 @@ const StyledGuessMap = styled.div<StyledProps>`
   .map {
     height: ${({ mapHeight }) => mapHeight}vh;
     width: ${({ mapWidth }) => mapWidth}vw;
+    min-height: 240px;
+    min-width: 340px;
     opacity: ${({ mapWidth }) => (mapWidth === 300 ? 0.5 : 1)};
     border-radius: 4px;
     transition: opacity 0.1s ease, width 0.1s ease, height 0.1s ease;
@@ -51,6 +53,8 @@ const StyledGuessMap = styled.div<StyledProps>`
       height: 100%;
       width: 100%;
       border-radius: 0;
+      min-height: 0;
+      min-width: 0;
     }
   }
 

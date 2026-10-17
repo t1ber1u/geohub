@@ -12,6 +12,7 @@ import { GUESS_MAP_OPTIONS } from '@utils/constants/googleMapOptions'
 import { POLYGON_STYLES } from '@utils/constants/polygonStyles'
 import { formatPolygon, getMapsKey } from '@utils/helpers'
 import useGuessMap from '@utils/hooks/useGuessMap'
+import { COLLAPSED_GUESS_MAP_SIZE } from '@utils/helpers/getGuessMapSize'
 import { StyledStreaksGuessMap } from './'
 import { LockOpenIcon, LockClosedIcon } from '@heroicons/react/solid'
 
@@ -82,8 +83,8 @@ const StreaksGuessMap: FC<Props> = ({
     map.setZoom(1)
 
     setHovering(false)
-    setMapHeight(15)
-    setMapWidth(15)
+    setMapHeight(COLLAPSED_GUESS_MAP_SIZE.height)
+    setMapWidth(COLLAPSED_GUESS_MAP_SIZE.width)
     setIsPinned(false)
     setCountryStreakGuess('')
     removeCountryPolygons(map)

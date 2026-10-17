@@ -1,9 +1,11 @@
-// Gets dimensions of guess map based on users preferred size
+// width in vw, height in vh
+export const COLLAPSED_GUESS_MAP_SIZE = { width: 24, height: 28 }
+
 const getGuessMapSize = (size: number) => {
   const SIZES = [
-    { width: 15, height: 15 },
-    { width: 30, height: 40 },
-    { width: 40, height: 55 },
+    { width: 30, height: 38 },
+    { width: 40, height: 52 },
+    { width: 50, height: 65 },
     { width: 65, height: 80 },
   ]
 

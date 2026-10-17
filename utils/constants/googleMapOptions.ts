@@ -1,3 +1,4 @@
+import { Maps } from 'google-map-react'
 import Game from '@backend/models/game'
 
 // This is the best way I found to enable POIs
@@ -13,14 +14,24 @@ const showPOIs = [
   },
 ]
 
-export const GUESS_MAP_OPTIONS = {
+// Behaves like regular Google Maps: scroll/pinch to zoom, +/- buttons, map/satellite switch
+export const GUESS_MAP_OPTIONS = (maps: Maps) => ({
   disableDefaultUI: true,
   clickableIcons: false,
   gestureHandling: 'greedy',
   minZoom: 1,
   draggableCursor: 'crosshair',
+  draggingCursor: 'grabbing',
   styles: showPOIs,
-}
+  zoomControl: true,
+  zoomControlOptions: { position: maps.ControlPosition.RIGHT_BOTTOM },
+  mapTypeControl: true,
+  mapTypeControlOptions: {
+    style: maps.MapTypeControlStyle.DROPDOWN_MENU,
+    mapTypeIds: ['roadmap', 'hybrid'],
+    position: maps.ControlPosition.LEFT_BOTTOM,
+  },
+})
 
 export const RESULT_MAP_OPTIONS = {
   disableDefaultUI: true,

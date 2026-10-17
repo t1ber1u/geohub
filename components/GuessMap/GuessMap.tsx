@@ -3,11 +3,12 @@ import { FC, useEffect, useRef, useState } from 'react'
 import Game from '@backend/models/game'
 import { Marker } from '@components/Marker'
 import { Button } from '@components/system'
-import { ArrowRightIcon, XIcon } from '@heroicons/react/outline'
+import { ArrowRightIcon, GlobeAltIcon, XIcon } from '@heroicons/react/outline'
 import { useAppSelector } from '@redux/hook'
 import { GoogleMapsConfigType, LocationType } from '@types'
 import { GUESS_MAP_OPTIONS } from '@utils/constants/googleMapOptions'
 import useGuessMap from '@utils/hooks/useGuessMap'
+import { COLLAPSED_GUESS_MAP_SIZE } from '@utils/helpers/getGuessMapSize'
 import getMapsKey from '../../utils/helpers/getMapsKey'
 import { StyledGuessMap } from './'
 import { LockOpenIcon, LockClosedIcon } from '@heroicons/react/solid'
@@ -71,6 +72,20 @@ const GuessMap: FC<Props> = ({
   const handleResetMapState = () => {
     if (!resetMap || !googleMapsConfig || !gameData.mapDetails) return
 
+    fitMapToGameArea()
+
+    setHovering(false)
+    setMapHeight(COLLAPSED_GUESS_MAP_SIZE.height)
+    setMapWidth(COLLAPSED_GUESS_MAP_SIZE.width)
+    setIsPinned(false)
+    setCurrGuess(null)
+    setMarker(null)
+    closeMobileMap()
+  }
+
+  const fitMapToGameArea = () => {
+    if (!googleMapsConfig || !gameData.mapDetails) return
+
     const { map } = googleMapsConfig
 
     const { bounds, scoreFactor } = gameData.mapDetails
@@ -90,14 +105,6 @@ const GuessMap: FC<Props> = ({
       map.setCenter({ lat: 0, lng: 0 })
       map.setZoom(1)
     }
-
-    setHovering(false)
-    setMapHeight(15)
-    setMapWidth(15)
-    setIsPinned(false)
-    setCurrGuess(null)
-    setMarker(null)
-    closeMobileMap()
   }
 
   const addMarker = (e: google.maps.MapMouseEvent) => {
@@ -132,6 +139,10 @@ const GuessMap: FC<Props> = ({
 
             <button className="controlBtn" onClick={() => setIsPinned(!isPinned)}>
               {isPinned ? <LockClosedIcon /> : <LockOpenIcon />}
+            </button>
+
+            <button className="controlBtn" onClick={fitMapToGameArea} title="Reset map view">
+              <GlobeAltIcon />
             </button>
           </div>
         )}
