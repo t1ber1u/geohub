@@ -1,6 +1,8 @@
-# Runs the whole game (app + MongoDB) inside a GitHub Actions job and exposes it through a
-# Cloudflare quick tunnel. Start it from Actions > "Play GeoHub" > Run workflow.
-# The public URL is shown in the job summary. Everything (incl. accounts/scores) is wiped when the job ends (max 6h).
+# Runs the game inside a GitHub Actions job and exposes it through a Cloudflare quick tunnel.
+# Data lives in the persistent MongoDB on the Raspberry Pi, reached through the mongo.price.com.ro
+# Cloudflare tunnel (cloudflared access tcp). Start it from Actions > "Play GeoHub" > Run workflow.
+# The public URL is shown in the job summary. The game stays up for max ~6h; accounts/scores persist.
+# Repo secrets: GOOGLE_MAPS_API_KEY, MONGO_URI (pointing at 127.0.0.1:27017), CRYPTR_SECRET.
 name: Play GeoHub
 
 on:
@@ -10,17 +12,20 @@ jobs:
   play:
     runs-on: ubuntu-latest
     timeout-minutes: 355
-    services:
-      mongo:
-        image: mongo:7
-        ports:
-          - 27017:27017
     env:
-      MONGO_URI: mongodb://localhost:27017
+      MONGO_URI: ${{ secrets.MONGO_URI }}
       DB_NAME: geohub
       NEXT_PUBLIC_GOOGLE_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
       RESEND_API_KEY: unused
     steps:
+      - name: Check secrets
+        env:
+          CRYPTR_SECRET: ${{ secrets.CRYPTR_SECRET }}
+        run: |
+          for s in MONGO_URI NEXT_PUBLIC_GOOGLE_API_KEY CRYPTR_SECRET; do
+            [ -n "${!s}" ] || { echo "::error::Missing repo secret for $s (Settings > Secrets and variables > Actions)"; exit 1; }
+          done
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
@@ -30,16 +35,43 @@ jobs:
 
       - run: yarn install --frozen-lockfile
 
-      - name: Build
-        run: yarn build
-
-      - name: Seed database
-        run: node scripts/seed.js
-
-      - name: Open tunnel
+      - name: Connect to Pi MongoDB
         run: |
           curl -sSL -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
           chmod +x cloudflared
+          nohup ./cloudflared access tcp --hostname mongo.price.com.ro --url 127.0.0.1:27017 > db-tunnel.log 2>&1 &
+          for i in $(seq 1 15); do nc -z 127.0.0.1 27017 && break; sleep 2; done
+          node -e "
+            const { MongoClient } = require('mongodb')
+            new MongoClient(process.env.MONGO_URI, { serverSelectionTimeoutMS: 20000 }).connect()
+              .then(async (c) => { await c.db(process.env.DB_NAME).command({ ping: 1 }); await c.close(); console.log('Pi MongoDB reachable') })
+              .catch((e) => { console.error(e.message); process.exit(1) })
+          " || { cat db-tunnel.log; echo "::error::Cannot reach MongoDB on the Pi (is the Pi online?)"; exit 1; }
+
+      - name: Build
+        run: yarn build
+
+      - name: Seed database (only if empty)
+        run: |
+          set +e
+          node -e "
+            const { MongoClient, ObjectId } = require('mongodb')
+            new MongoClient(process.env.MONGO_URI).connect().then(async (c) => {
+              const n = await c.db(process.env.DB_NAME).collection('locations').countDocuments({ mapId: new ObjectId('6185df7a7b54baf63473a53e') })
+              await c.close()
+              process.exit(n > 0 ? 0 : 10)
+            }).catch((e) => { console.error(e.message); process.exit(1) })
+          "
+          rc=$?
+          set -e
+          case $rc in
+            0) echo "World map already seeded, skipping" ;;
+            10) node scripts/seed.js ;;
+            *) exit $rc ;;
+          esac
+
+      - name: Open tunnel
+        run: |
           nohup ./cloudflared tunnel --no-autoupdate --url http://localhost:3000 > tunnel.log 2>&1 &
           for i in $(seq 1 30); do
             URL=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' tunnel.log | head -1 || true)
@@ -49,18 +81,30 @@ jobs:
           [ -n "$URL" ] || { cat tunnel.log; echo "::error::tunnel did not start"; exit 1; }
           echo "NEXTAUTH_URL=$URL" >> "$GITHUB_ENV"
           echo "### 🌍 Play GeoHub: $URL" >> "$GITHUB_STEP_SUMMARY"
-          echo "Up for up to ~6 hours. Data is wiped when the job ends." >> "$GITHUB_STEP_SUMMARY"
+          echo "Up for up to ~6 hours. Accounts and scores are stored on the Pi and persist between runs." >> "$GITHUB_STEP_SUMMARY"
           echo "::notice title=GeoHub is live::$URL"
 
       - name: Run game (up to ~5h50m)
         env:
           NEXTAUTH_SECRET: ${{ github.run_id }}-${{ github.sha }}-nextauth
-          CRYPTR_SECRET: ${{ github.run_id }}-${{ github.sha }}-cryptr
+          CRYPTR_SECRET: ${{ secrets.CRYPTR_SECRET }}
           INTERNAL_API_SECRET: ${{ github.run_id }}-internal
           CRON_SECRET: ${{ github.run_id }}-cron
         run: |
           yarn start &
           for i in $(seq 1 30); do curl -sf localhost:3000 >/dev/null && break; sleep 2; done
-          # create today's daily challenge
-          curl -s -H "authorization: $CRON_SECRET" localhost:3000/api/cron/create-daily-challenge || true
+          # create today's daily challenge unless one already exists for today (UTC); the DB persists between runs
+          if node -e "
+            const { MongoClient } = require('mongodb')
+            new MongoClient(process.env.MONGO_URI).connect().then(async (c) => {
+              const today = new Date(); today.setUTCHours(0, 0, 0, 0)
+              const n = await c.db(process.env.DB_NAME).collection('challenges').countDocuments({ isDailyChallenge: true, createdAt: { \$gte: today } })
+              await c.close()
+              process.exit(n > 0 ? 0 : 10)
+            }).catch(() => process.exit(0))
+          "; then
+            echo "Today's daily challenge already exists"
+          else
+            curl -s -H "authorization: $CRON_SECRET" localhost:3000/api/cron/create-daily-challenge || true
+          fi
           sleep 20990
