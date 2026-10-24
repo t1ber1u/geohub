@@ -2,7 +2,8 @@
 # Data lives in the persistent MongoDB on the Raspberry Pi, reached through the mongo.price.com.ro
 # Cloudflare tunnel (cloudflared access tcp). Start it from Actions > "Play GeoHub" > Run workflow.
 # The public URL is shown in the job summary. The game stays up for max ~6h; accounts/scores persist.
-# Repo secrets: GOOGLE_MAPS_API_KEY, MONGO_URI (pointing at 127.0.0.1:27017), CRYPTR_SECRET.
+# Repo secrets: GOOGLE_MAPS_API_KEY, MONGO_URI (pointing at 127.0.0.1:27017), CRYPTR_SECRET,
+# and optionally CF_ACCESS_CLIENT_ID / CF_ACCESS_CLIENT_SECRET (Cloudflare Access service token).
 name: Play GeoHub
 
 on:
@@ -36,9 +37,17 @@ jobs:
       - run: yarn install --frozen-lockfile
 
       - name: Connect to Pi MongoDB
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           curl -sSL -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
           chmod +x cloudflared
+          # Cloudflare Access service token (optional until an Access app protects mongo.price.com.ro)
+          if [ -n "$CF_ACCESS_CLIENT_ID" ] && [ -n "$CF_ACCESS_CLIENT_SECRET" ]; then
+            export TUNNEL_SERVICE_TOKEN_ID="$CF_ACCESS_CLIENT_ID" TUNNEL_SERVICE_TOKEN_SECRET="$CF_ACCESS_CLIENT_SECRET"
+            echo "Using Cloudflare Access service token"
+          fi
           nohup ./cloudflared access tcp --hostname mongo.price.com.ro --url 127.0.0.1:27017 > db-tunnel.log 2>&1 &
           for i in $(seq 1 15); do nc -z 127.0.0.1 27017 && break; sleep 2; done
           node -e "
