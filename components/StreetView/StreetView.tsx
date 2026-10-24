@@ -104,7 +104,8 @@ const Streetview: FC<Props> = ({ gameData, setGameData, view, setView }) => {
 
     if (!svService || !svPanorama) return
 
-    await svService.getPanorama({ location, radius: 50 }, (data) => {
+    // OUTDOOR excludes user-uploaded photospheres, which are rate-limited (429) and often low quality
+    await svService.getPanorama({ location, radius: 50, source: google.maps.StreetViewSource.OUTDOOR }, (data) => {
       if (!data || !data.location) {
         return showToast('error', 'Could not load streetview for this location')
       }
