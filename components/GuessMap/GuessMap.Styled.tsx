@@ -58,6 +58,15 @@ const StyledGuessMap = styled.div<StyledProps>`
     }
   }
 
+  /* desktop: search shows with the expanded map, like the size controls; mobile: always inside the open sheet */
+  .map:not(.expanded) .guessMapSearch {
+    display: none;
+
+    @media (max-width: 600px) {
+      display: block;
+    }
+  }
+
   .controls {
     display: flex;
     align-items: center;

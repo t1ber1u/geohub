@@ -1,6 +1,7 @@
 import GoogleMapReact from 'google-map-react'
 import { FC, useEffect, useRef, useState } from 'react'
 import Game from '@backend/models/game'
+import { GuessMapSearch } from '@components/GuessMapSearch'
 import { Marker } from '@components/Marker'
 import { Button } from '@components/system'
 import { ArrowRightIcon, GlobeAltIcon, XIcon } from '@heroicons/react/outline'
@@ -37,6 +38,8 @@ const GuessMap: FC<Props> = ({
   gameData,
 }) => {
   const [marker, setMarker] = useState<{ lat: number; lng: number } | null>(null)
+  const searchFocusedRef = useRef(false)
+  const pointerInsideRef = useRef(false)
 
   const {
     mapHeight,
@@ -116,9 +119,25 @@ const GuessMap: FC<Props> = ({
     setMarker(location)
   }
 
+  // keep the map expanded while typing in the search box, even if the pointer wanders off
+  const handleWrapperHover = () => {
+    pointerInsideRef.current = true
+    handleMapHover()
+  }
+
+  const handleWrapperLeave = () => {
+    pointerInsideRef.current = false
+    if (!searchFocusedRef.current) handleMapLeave()
+  }
+
+  const handleSearchFocusChange = (focused: boolean) => {
+    searchFocusedRef.current = focused
+    if (!focused && !pointerInsideRef.current) handleMapLeave()
+  }
+
   return (
     <StyledGuessMap mapHeight={mapHeight} mapWidth={mapWidth} mobileMapOpen={mobileMapOpen}>
-      <div className="guessMapWrapper" onMouseOver={handleMapHover} onMouseLeave={handleMapLeave}>
+      <div className="guessMapWrapper" onMouseOver={handleWrapperHover} onMouseLeave={handleWrapperLeave}>
         {hovering && (
           <div className="controls">
             <button
@@ -147,7 +166,9 @@ const GuessMap: FC<Props> = ({
           </div>
         )}
 
-        <div className="map">
+        <div className={`map ${hovering ? 'expanded' : ''}`}>
+          <GuessMapSearch map={googleMapsConfig?.map} onFocusChange={handleSearchFocusChange} />
+
           <GoogleMapReact
             bootstrapURLKeys={getMapsKey(user.mapsAPIKey)}
             defaultCenter={{ lat: 0, lng: 0 }}
