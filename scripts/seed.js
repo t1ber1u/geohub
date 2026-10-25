@@ -85,6 +85,8 @@ async function main() {
   const client = await new MongoClient(MONGO_URI).connect()
   const db = client.db(DB_NAME)
   const mapId = new ObjectId(WORLD_ID)
+  const lats = SPOTS.map(([lat]) => lat)
+  const lngs = SPOTS.map(([, lng]) => lng)
 
   await db.collection('maps').updateOne(
     { _id: mapId },
@@ -95,12 +97,13 @@ async function main() {
         previewImg: 'official1.jpg',
         creator: 'GeoHub',
         isPublished: true,
-        avgScore: 0,
-        usersPlayed: 0,
         locationCount: SPOTS.length,
-        scoreFactor: 1,
+        bounds: { min: { lat: Math.min(...lats), lng: Math.min(...lngs) }, max: { lat: Math.max(...lats), lng: Math.max(...lngs) } },
+        // same scale as calculateMapScoreFactor's world reference; 1 made every guess worth ~0 points
+        scoreFactor: 2000,
       },
-      $setOnInsert: { createdAt: new Date() },
+      // re-seeding must not reset play stats
+      $setOnInsert: { createdAt: new Date(), avgScore: 0, usersPlayed: 0 },
     },
     { upsert: true }
   )
