@@ -16,6 +16,12 @@ import { DailyQuotaModal } from '@components/modals/DailyQuotaModal'
 
 const PANO_SEARCH_RADII = [50, 1000, 5000] // meters
 
+// game shortcuts must not fire while typing, e.g. in the guess map search box
+const isTypingTarget = (e: KeyboardEvent) => {
+  const el = e.target as HTMLElement | null
+  return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
+}
+
 type Props = {
   gameData: Game
   setGameData: (gameData: Game) => void
@@ -126,20 +132,26 @@ const Streetview: FC<Props> = ({ gameData, setGameData, view, setView }) => {
     setLoading(false)
   }
 
+  // Prefer official Google imagery: user photospheres are rate-limited (429), often indoors or low quality.
+  // Fall back to them only where Google has no coverage, so the round still loads.
   // Search close first (precisely placed locations), then widen for coordinates without nearby coverage.
-  // OUTDOOR excludes user-uploaded photospheres, which are rate-limited (429) and often low quality
   const findPanorama = async (svService: google.maps.StreetViewService) => {
-    for (const radius of PANO_SEARCH_RADII) {
-      try {
-        const { data } = await svService.getPanorama({
-          location,
-          radius,
-          source: google.maps.StreetViewSource.OUTDOOR,
-        })
+    // `sources` isn't in @types/google.maps 3.51 yet, hence the cast
+    const sourcePreferences = [{ sources: ['google'] }, { source: google.maps.StreetViewSource.OUTDOOR }]
 
-        if (data?.location?.pano) return data
-      } catch {
-        // ZERO_RESULTS rejects the promise; try the next radius
+    for (const sourcePreference of sourcePreferences) {
+      for (const radius of PANO_SEARCH_RADII) {
+        try {
+          const { data } = await svService.getPanorama({
+            location,
+            radius,
+            ...sourcePreference,
+          } as google.maps.StreetViewLocationRequest)
+
+          if (data?.location?.pano) return data
+        } catch {
+          // ZERO_RESULTS rejects the promise; try the next radius
+        }
       }
     }
 
@@ -200,7 +212,7 @@ const Streetview: FC<Props> = ({ gameData, setGameData, view, setView }) => {
   const handleBackToStartKeys = (e: KeyboardEvent) => {
     const backToStartKeys = ['r']
 
-    if (backToStartKeys.includes(e.key)) {
+    if (!isTypingTarget(e) && backToStartKeys.includes(e.key)) {
       handleBackToStart()
     }
   }
@@ -227,7 +239,7 @@ const Streetview: FC<Props> = ({ gameData, setGameData, view, setView }) => {
   const handleUndoLastMoveKeys = (e: KeyboardEvent) => {
     const undoMoveKeys = ['z']
 
-    if (undoMoveKeys.includes(e.key) && gameData.gameSettings.canMove) {
+    if (!isTypingTarget(e) && undoMoveKeys.includes(e.key) && gameData.gameSettings.canMove) {
       handleUndoLastMove()
     }
   }
@@ -244,6 +256,11 @@ const Streetview: FC<Props> = ({ gameData, setGameData, view, setView }) => {
 
   const handleSubmitGuessKeys = async (e: KeyboardEvent) => {
     const submitGuessKeys = [KEY_CODES.SPACE, KEY_CODES.SPACE_IE11, KEY_CODES.ENTER]
+
+    if (isTypingTarget(e)) {
+      // the listener is registered with { once: true }, so put it back for after the typing
+      return document.addEventListener('keydown', handleSubmitGuessKeys, { once: true })
+    }
 
     if (submitGuessKeys.includes(e.key)) {
       await handleSubmitGuess()
@@ -270,7 +287,7 @@ const Streetview: FC<Props> = ({ gameData, setGameData, view, setView }) => {
       's',
     ]
 
-    if (!gameData.gameSettings.canMove && movingArrowKeys.includes(e.key)) {
+    if (!isTypingTarget(e) && !gameData.gameSettings.canMove && movingArrowKeys.includes(e.key)) {
       e.stopPropagation()
     }
   }
