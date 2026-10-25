@@ -60,24 +60,27 @@ jobs:
       - name: Build
         run: yarn build
 
-      - name: Seed database (only if empty)
+      - name: Seed official maps (only if missing)
         run: |
-          set +e
-          node -e "
-            const { MongoClient, ObjectId } = require('mongodb')
-            new MongoClient(process.env.MONGO_URI).connect().then(async (c) => {
-              const n = await c.db(process.env.DB_NAME).collection('locations').countDocuments({ mapId: new ObjectId('6185df7a7b54baf63473a53e') })
-              await c.close()
-              process.exit(n > 0 ? 0 : 10)
-            }).catch((e) => { console.error(e.message); process.exit(1) })
-          "
-          rc=$?
-          set -e
-          case $rc in
-            0) echo "World map already seeded, skipping" ;;
-            10) node scripts/seed.js ;;
-            *) exit $rc ;;
-          esac
+          for entry in "6185df7a7b54baf63473a53e scripts/seed.js" "6185dfd47b54baf63473a540 scripts/seed-landmarks.js"; do
+            set -- $entry
+            set +e
+            MAP_ID=$1 node -e "
+              const { MongoClient, ObjectId } = require('mongodb')
+              new MongoClient(process.env.MONGO_URI).connect().then(async (c) => {
+                const n = await c.db(process.env.DB_NAME).collection('locations').countDocuments({ mapId: new ObjectId(process.env.MAP_ID) })
+                await c.close()
+                process.exit(n > 0 ? 0 : 10)
+              }).catch((e) => { console.error(e.message); process.exit(1) })
+            "
+            rc=$?
+            set -e
+            case $rc in
+              0) echo "$2: map already seeded, skipping" ;;
+              10) node "$2" ;;
+              *) exit $rc ;;
+            esac
+          done
 
       - name: Open tunnel
         run: |

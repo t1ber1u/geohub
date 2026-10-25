@@ -136,6 +136,16 @@ const Streetview: FC<Props> = ({ gameData, setGameData, view, setView }) => {
   // Fall back to them only where Google has no coverage, so the round still loads.
   // Search close first (precisely placed locations), then widen for coordinates without nearby coverage.
   const findPanorama = async (svService: google.maps.StreetViewService) => {
+    // curated locations (e.g. Famous Landmarks, editor-placed spots) store the exact panorama to open
+    if (location.panoId) {
+      try {
+        const { data } = await svService.getPanorama({ pano: location.panoId })
+        if (data?.location?.pano) return data
+      } catch {
+        // panorama retired by Google; fall back to searching around the location
+      }
+    }
+
     // `sources` isn't in @types/google.maps 3.51 yet, hence the cast
     const sourcePreferences = [{ sources: ['google'] }, { source: google.maps.StreetViewSource.OUTDOOR }]
 
