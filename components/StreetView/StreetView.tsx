@@ -14,6 +14,8 @@ import { mailman, showToast } from '@utils/helpers'
 import { StyledStreetView } from './'
 import { DailyQuotaModal } from '@components/modals/DailyQuotaModal'
 
+const PANO_SEARCH_RADII = [50, 1000, 5000] // meters
+
 type Props = {
   gameData: Game
   setGameData: (gameData: Game) => void
@@ -104,24 +106,44 @@ const Streetview: FC<Props> = ({ gameData, setGameData, view, setView }) => {
 
     if (!svService || !svPanorama) return
 
-    // OUTDOOR excludes user-uploaded photospheres, which are rate-limited (429) and often low quality
-    await svService.getPanorama({ location, radius: 50, source: google.maps.StreetViewSource.OUTDOOR }, (data) => {
-      if (!data || !data.location) {
-        return showToast('error', 'Could not load streetview for this location')
-      }
+    const data = await findPanorama(svService)
 
-      svPanorama.setPano(data.location.pano)
-      svPanorama.setPov({
-        heading: location.heading || 0,
-        pitch: location.pitch || 0,
-      })
-      svPanorama.setZoom(location.zoom || 0)
-      svPanorama.setVisible(true)
+    if (!data || !data.location) {
+      setLoading(false)
+      return showToast('error', 'Could not load streetview for this location')
+    }
 
-      undoLocRef.current = []
+    svPanorama.setPano(data.location.pano)
+    svPanorama.setPov({
+      heading: location.heading || 0,
+      pitch: location.pitch || 0,
     })
+    svPanorama.setZoom(location.zoom || 0)
+    svPanorama.setVisible(true)
+
+    undoLocRef.current = []
 
     setLoading(false)
+  }
+
+  // Search close first (precisely placed locations), then widen for coordinates without nearby coverage.
+  // OUTDOOR excludes user-uploaded photospheres, which are rate-limited (429) and often low quality
+  const findPanorama = async (svService: google.maps.StreetViewService) => {
+    for (const radius of PANO_SEARCH_RADII) {
+      try {
+        const { data } = await svService.getPanorama({
+          location,
+          radius,
+          source: google.maps.StreetViewSource.OUTDOOR,
+        })
+
+        if (data?.location?.pano) return data
+      } catch {
+        // ZERO_RESULTS rejects the promise; try the next radius
+      }
+    }
+
+    return null
   }
 
   const trackLocations = () => {
