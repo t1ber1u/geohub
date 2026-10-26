@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
 import { NextApiRequest, NextApiResponse } from 'next'
-import { collections, getUserId, throwError } from '@backend/utils'
+import { collections, getUserId } from '@backend/utils'
 
 const getUserDetailsHelper = async (userId: ObjectId) => {
   const userDetails = await collections.users?.findOne({ _id: userId })
@@ -36,8 +36,9 @@ const getRecentSearches = async (req: NextApiRequest, res: NextApiResponse) => {
 
   const recentSearches = await collections.recentSearches?.findOne({ userId: new ObjectId(userId) })
 
+  // users who have never searched simply have no recent searches
   if (!recentSearches || !recentSearches.searches) {
-    return throwError(res, 400, `Failed to find recent searches for user with id: ${userId}`)
+    return res.status(200).send([])
   }
 
   type Result = {
