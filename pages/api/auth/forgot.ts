@@ -33,7 +33,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         return throwError(res, 400, 'Invalid email address')
       }
 
-      const user = await collections.users?.findOne({ email })
+      // emails are matched case-insensitively ("Jane@x.com" and "jane@x.com" are the same inbox)
+      const escapedEmail = email.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const user = await collections.users?.findOne({ email: new RegExp(`^${escapedEmail}$`, 'i') })
 
       // Skip email but show success to protect privacy
       if (!user) {
@@ -57,7 +59,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         return throwError(res, 500, 'Failed to generate email token')
       }
 
-      const resetPasswordUrl = `${protocol}://${host}/reset-password/${token}`
+      const siteUrl = `${protocol}://${host}`
+      const resetPasswordUrl = `${siteUrl}/reset-password/${token}`
       const subject = 'Password reset'
 
       const emailText = {
@@ -65,7 +68,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         text: `No worries, it happens! Click the link below to reset your password. If you didn't make this request, please disregard this email and the link will expire in 24 hours.`,
         button: 'Reset your password',
         siteName: 'GeoHub',
-        siteUrl: 'https://www.geohub.gg',
+        siteUrl,
       }
 
       const html = `
@@ -118,10 +121,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         </table>
       `
 
-      const emailResult = await sendEmail(email, subject, html)
+      const emailResult = await sendEmail(user.email, subject, html)
 
       if (!emailResult) {
-        return throwError(res, 500, 'Failed to send reset link')
+        return throwError(res, 500, "We couldn't send the reset email right now. Please try again in a few minutes.")
       }
 
       res.status(200).send(SUCCESS_RESPONSE)

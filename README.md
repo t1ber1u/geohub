@@ -110,6 +110,9 @@ DB_NAME="your-mongodb-database-name"
 NEXTAUTH_SECRET="any-random-string"
 CRYPTR_SECRET="any-random-string"
 NEXTAUTH_URL="http://localhost:3000"
+# password reset emails (resend.com); the sender's domain must be verified in your Resend account
+RESEND_API_KEY="re_..."
+EMAIL_FROM="GeoHub <noreply@your-verified-domain.com>"
 ```
 
 Next, you can install the required dependencies and start the local dev server:

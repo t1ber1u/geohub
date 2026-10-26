@@ -19,7 +19,9 @@ jobs:
       MONGO_URI: ${{ secrets.MONGO_URI }}
       DB_NAME: geohub
       NEXT_PUBLIC_GOOGLE_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
-      RESEND_API_KEY: unused
+      # password reset emails; the sender's domain must be verified in Resend
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || 'unused' }}
+      EMAIL_FROM: GeoHub <noreply@price.com.ro>
     steps:
       - name: Check secrets
         env:
