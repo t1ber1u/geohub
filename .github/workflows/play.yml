@@ -131,4 +131,6 @@ jobs:
           else
             curl -s -H "authorization: $CRON_SECRET" localhost:3000/api/cron/create-daily-challenge || true
           fi
+          # end unfinished games nobody has played for 30 days (also enforced whenever games are listed or opened)
+          curl -s -H "authorization: $CRON_SECRET" localhost:3000/api/cron/delete-ongoing-games || true
           sleep 20990

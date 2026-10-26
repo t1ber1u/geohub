@@ -29,3 +29,4 @@ export type {
   RankingsRecords,
   RankingsRules,
 } from './MapRankings'
+export type { default as OngoingGameType } from './OngoingGame'

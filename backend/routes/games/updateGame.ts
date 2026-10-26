@@ -42,6 +42,10 @@ const updateGame = async (req: NextApiRequest, res: NextApiResponse) => {
     return throwError(res, 401, 'You are not authorized to modify this game')
   }
 
+  if (game.state === 'abandoned') {
+    return throwError(res, 410, 'This game is no longer available')
+  }
+
   // Checking if guess has already been submitted for this round
   if (game.guesses.length === localRound) {
     return throwError(res, 400, 'You have already made a guess for this round. Please refresh your browser')
@@ -148,6 +152,7 @@ const updateGame = async (req: NextApiRequest, res: NextApiResponse) => {
   game.totalDistance.metric += distance.metric
   game.totalDistance.imperial += distance.imperial
   game.totalTime += Math.floor(guessTime)
+  game.lastPlayedAt = new Date()
 
   const updatedGame = await collections.games?.findOneAndUpdate(getGameQuery, { $set: game })
 

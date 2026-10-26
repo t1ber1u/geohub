@@ -36,6 +36,7 @@ const createGame = async (req: NextApiRequest, res: NextApiResponse) => {
     streak: 0,
     state: 'started',
     createdAt: new Date(),
+    lastPlayedAt: new Date(),
   } as Game
 
   // Create game

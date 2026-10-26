@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '@redux/hook'
 import { updateGuessMapSize } from '@redux/slices'
 import { getGuessMapSize } from '@utils/helpers'
@@ -14,6 +14,9 @@ const useGuessMap = () => {
 
   const user = useAppSelector((state) => state.user)
   const dispatch = useAppDispatch()
+
+  // the collapse delay can outlive the game view (e.g. after "Save & exit")
+  useEffect(() => () => clearTimeout(hoverDelay.current), [])
 
   const handleMapHover = () => {
     clearTimeout(hoverDelay.current)

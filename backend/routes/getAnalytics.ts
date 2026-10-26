@@ -17,7 +17,7 @@ const getAnalytics = async (req: NextApiRequest, res: NextApiResponse) => {
     const customMapsCount = await collections.maps?.find({ creator: { $ne: 'GeoHub' } }).count()
     const customLocationsCount = await collections.userLocations?.estimatedDocumentCount()
     const customKeysCount = await collections.users?.find({ mapsAPIKey: { $exists: true, $ne: '' } }).count()
-    const unfinishedGamesCount = await collections.games?.find({ state: { $ne: 'finished' } }).count()
+    const unfinishedGamesCount = await collections.games?.find({ state: 'started' }).count()
 
     return [
       { title: 'Users', count: userCount },

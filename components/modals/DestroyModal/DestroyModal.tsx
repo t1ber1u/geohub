@@ -9,9 +9,18 @@ type Props = {
   onClose: () => void
   onAction: () => void
   isSubmitting?: boolean
+  actionLabel?: string
 }
 
-const DestroyModal: FC<Props> = ({ title, message, isOpen, onClose, onAction, isSubmitting }) => {
+const DestroyModal: FC<Props> = ({
+  title,
+  message,
+  isOpen,
+  onClose,
+  onAction,
+  isSubmitting,
+  actionLabel = 'Delete',
+}) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <StyledDestroyModal>
@@ -28,7 +37,7 @@ const DestroyModal: FC<Props> = ({ title, message, isOpen, onClose, onAction, is
             Cancel
           </Button>
           <Button variant="destroy" size="md" onClick={onAction} isLoading={isSubmitting}>
-            Delete
+            {actionLabel}
           </Button>
         </div>
       </StyledDestroyModal>

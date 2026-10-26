@@ -1,203 +1,265 @@
 import type { NextPage } from 'next'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
-import { NoResults } from '@components/errorViews'
 import { PageHeader, WidthController } from '@components/layout'
 import { Meta } from '@components/Meta'
-import { DestroyModal } from '@components/modals'
-import { SkeletonOngoingGames } from '@components/skeletons'
-import { Avatar, Pill, Spinner } from '@components/system'
-import { ExclamationCircleIcon, TrashIcon } from '@heroicons/react/outline'
+import { AuthModal, DestroyModal } from '@components/modals'
+import { getOngoingGameTitle, OngoingGameCard } from '@components/OngoingGameCard'
+import { Spinner } from '@components/system'
+import { InformationCircleIcon, PlayIcon, SparklesIcon } from '@heroicons/react/outline'
 import { useAppSelector } from '@redux/hook'
 import StyledOngoingGamesPage from '@styles/OngoingGamesPage.Styled'
-import { GameType, MapType } from '@types'
-import { COUNTRY_STREAK_DETAILS, DAILY_CHALLENGE_DETAILS } from '@utils/constants/random'
-import { formatMonthDayYear } from '@utils/dateHelpers'
-import { formatOngoingScore, mailman, showToast } from '@utils/helpers'
+import { OngoingGameType } from '@types'
+import { formatLargeNumber, mailman, showToast } from '@utils/helpers'
 import { useBreakpoint } from '@utils/hooks'
 
-type OngoingGame = GameType & {
-  mapDetails: MapType[]
-}
-
 const OngoingGamesPage: NextPage = () => {
-  const [games, setGames] = useState<OngoingGame[]>([])
+  const [games, setGames] = useState<OngoingGameType[]>([])
   const [loading, setLoading] = useState(true)
-  const [gamesPage, setGamesPage] = useState(0)
-  const [hasMore, setHasMore] = useState(true)
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [deletingGameId, setDeletingGameId] = useState('')
-  const [isDeleting, setIsDeleting] = useState(false)
+  const [page, setPage] = useState(0)
+  const [hasMore, setHasMore] = useState(false)
+  const [total, setTotal] = useState(0)
+  const [notStartedCount, setNotStartedCount] = useState(0)
+  const [ttlDays, setTtlDays] = useState(30)
+  const [gameToRemove, setGameToRemove] = useState<OngoingGameType | null>(null)
+  const [clearModalOpen, setClearModalOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [savedGameId, setSavedGameId] = useState('')
+  const router = useRouter()
   const user = useAppSelector((state) => state.user)
+  const { status } = useSession()
   const { isBreakpoint } = useBreakpoint()
 
+  // the stored user appears a moment after sign-in, so (re)load whenever it changes
   useEffect(() => {
+    if (status === 'loading') return
+
     if (!user.id) {
+      setGames([])
       return setLoading(false)
     }
 
-    fetchGames()
-  }, [])
+    setLoading(true)
+    fetchGames(0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.id, status])
 
-  const fetchGames = async () => {
-    const res = await mailman(`games/unfinished?page=${gamesPage}`)
+  // arriving from "Save & exit" in a game
+  useEffect(() => {
+    const saved = router.query.saved
 
-    if (res.error) {
-      return showToast('error', res.error.message)
+    if (typeof saved !== 'string') return
+
+    setSavedGameId(saved)
+    showToast('success', 'Game saved. Continue it whenever you like.')
+    router.replace('/ongoing', undefined, { shallow: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.query.saved])
+
+  const fetchGames = async (pageToLoad: number) => {
+    const res = await mailman(`games/unfinished?page=${pageToLoad}`)
+
+    if (!res || res.error) {
+      setLoading(false)
+      return showToast('error', res?.error?.message || 'Could not load your ongoing games')
     }
 
+    setGames((prev) => (pageToLoad === 0 ? res.data : prev.concat(res.data)))
     setHasMore(res.hasMore)
-
-    if (!games) {
-      setGames(res.data)
-    } else {
-      setGames((prev) => prev.concat(res.data))
-    }
-
-    setGamesPage((prev) => prev + 1)
+    setTotal(res.total)
+    setNotStartedCount(res.notStartedCount)
+    setTtlDays(res.ttlDays)
+    setPage(pageToLoad + 1)
     setLoading(false)
   }
 
-  const openDeleteModal = (gameId: string) => {
-    setDeleteModalOpen(true)
-    setDeletingGameId(gameId)
-  }
+  const removeGame = async (game: OngoingGameType) => {
+    setIsSubmitting(true)
 
-  const handleDeleteGame = async () => {
-    setIsDeleting(true)
+    const res = await mailman(`games/${game._id}`, 'DELETE')
 
-    const res = await mailman(`games/${deletingGameId}`, 'DELETE')
+    setIsSubmitting(false)
 
-    setIsDeleting(false)
-
-    if (res?.error) {
-      return showToast('error', res.error.message)
+    if (!res || res.error) {
+      return showToast('error', res?.error?.message || 'Could not remove the game')
     }
 
-    setDeleteModalOpen(false)
-    showToast('success', res.message)
+    setGameToRemove(null)
+    setGames((prev) => prev.filter((g) => g._id !== game._id))
+    setTotal((prev) => prev - 1)
 
-    // Remove deleted game from state
-    const filtered = games.filter((game) => game._id != deletingGameId)
-    setGames(filtered)
+    if (game.guessCount === 0 && !game.challengeId) {
+      setNotStartedCount((prev) => Math.max(0, prev - 1))
+    }
+
+    showToast('success', `${getOngoingGameTitle(game)} game removed`)
+  }
+
+  // nothing is lost by removing a game that hasn't been played yet, so skip the confirmation
+  const handleRemove = (game: OngoingGameType) => {
+    if (game.guessCount === 0) {
+      return removeGame(game)
+    }
+
+    setGameToRemove(game)
+  }
+
+  const clearUnstartedGames = async () => {
+    setIsSubmitting(true)
+
+    const res = await mailman('games/unfinished', 'DELETE')
+
+    setIsSubmitting(false)
+
+    if (!res || res.error) {
+      return showToast('error', res?.error?.message || 'Could not clear the games')
+    }
+
+    setClearModalOpen(false)
+    showToast('success', `Cleared ${res.removed} unstarted ${res.removed === 1 ? 'game' : 'games'}`)
+    fetchGames(0)
+  }
+
+  const removeMessage = (game: OngoingGameType) => {
+    const progress =
+      game.mode === 'streak'
+        ? `your streak of ${game.streak}`
+        : `round ${game.round} of 5 with ${formatLargeNumber(game.totalPoints)} points`
+
+    const consequence = game.challengeId
+      ? "Your progress in this challenge will be lost and you'll have to start it again."
+      : "You won't be able to continue it."
+
+    return `You're on ${progress}. ${consequence}`
+  }
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="games-list">
+          {[0, 1, 2].map((idx) => (
+            <div key={idx} className="card-skeleton" />
+          ))}
+        </div>
+      )
+    }
+
+    if (!user.id) {
+      return (
+        <div className="empty-state">
+          <div className="empty-icon">
+            <PlayIcon />
+          </div>
+          <h2>Pick up where you left off</h2>
+          <p>Sign in and any game you leave before the end is saved here, so you can finish it later.</p>
+          <button className="empty-action" onClick={() => setAuthModalOpen(true)}>
+            Sign in
+          </button>
+        </div>
+      )
+    }
+
+    if (games.length === 0) {
+      return (
+        <div className="empty-state">
+          <div className="empty-icon">
+            <SparklesIcon />
+          </div>
+          <h2>No games in progress</h2>
+          <p>Games you leave before the final round show up here, so you can finish them any time.</p>
+          <Link href="/maps">
+            <a className="empty-action">Find a map to play</a>
+          </Link>
+        </div>
+      )
+    }
+
+    return (
+      <InfiniteScroll
+        dataLength={games.length}
+        next={() => fetchGames(page)}
+        hasMore={hasMore}
+        loader={
+          <div className="list-loader">
+            <Spinner size={24} />
+          </div>
+        }
+        key={isBreakpoint ? 1 : 0}
+        scrollableTarget={isBreakpoint ? undefined : 'main'}
+        className="games-list"
+      >
+        {games.map((game) => (
+          <OngoingGameCard
+            key={game._id}
+            game={game}
+            onRemove={handleRemove}
+            ttlDays={ttlDays}
+            highlighted={game._id === savedGameId}
+          />
+        ))}
+      </InfiniteScroll>
+    )
   }
 
   return (
     <StyledOngoingGamesPage>
-      <WidthController customWidth="1160px">
+      <WidthController customWidth="1000px">
         <Meta title="Ongoing Games" />
         <PageHeader>Ongoing Games</PageHeader>
 
-        <div className="ongoing-banner">
-          <div className="message">
-            <ExclamationCircleIcon />
-            <span>Ongoing games are only saved for 30 days after they are created</span>
-          </div>
+        <div className="page-intro">
+          <p className="intro-text">
+            <InformationCircleIcon />
+            <span>
+              {`Your unfinished games are saved here. Each one is kept for ${ttlDays} days after you last play it, so play a round to keep it longer. Challenges never expire.`}
+            </span>
+          </p>
+
+          {!loading && user.id && games.length > 0 && (
+            <div className="toolbar">
+              <span className="games-count">{`${total} ${total === 1 ? 'game' : 'games'} in progress`}</span>
+
+              {notStartedCount > 0 && (
+                <button className="clear-button" onClick={() => setClearModalOpen(true)}>
+                  {`Clear ${notStartedCount} unstarted ${notStartedCount === 1 ? 'game' : 'games'}`}
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
-        {!loading && (!user.id || games.length === 0) ? (
-          <NoResults message="You can find your unfinished games here." />
-        ) : (
-          <div className="ongoing-table">
-            {loading ? (
-              <SkeletonOngoingGames />
-            ) : (
-              <InfiniteScroll
-                dataLength={games.length}
-                next={() => fetchGames()}
-                hasMore={hasMore || false}
-                loader={
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '100%',
-                      padding: '1rem',
-                    }}
-                  >
-                    <Spinner size={24} />
-                  </div>
-                }
-                key={isBreakpoint ? 1 : 0}
-                scrollableTarget={isBreakpoint ? undefined : 'main'}
-              >
-                {games.map((game, idx) => (
-                  <div key={idx} className={`ongoing-item ${idx % 2 === 0 ? 'variant' : ''}`}>
-                    <div className="flex-left">
-                      <div className="map-details">
-                        <Avatar
-                          type="map"
-                          src={
-                            game.mode === 'streak'
-                              ? COUNTRY_STREAK_DETAILS.previewImg
-                              : game.isDailyChallenge
-                              ? DAILY_CHALLENGE_DETAILS.previewImg
-                              : game.mapDetails?.[0]?.previewImg
-                          }
-                        />
-                        <div className="mapNameWrapper">
-                          <span className="mapName">
-                            {game.mode === 'streak'
-                              ? COUNTRY_STREAK_DETAILS.name
-                              : game.isDailyChallenge
-                              ? DAILY_CHALLENGE_DETAILS.name
-                              : game.mapDetails?.[0]?.name}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex-right">
-                      {game.mode === 'standard' && (
-                        <div className="game-info-pills">
-                          <Pill label={`Round ${game.round}`} className="game-info-pill round" />
-                          <Pill label={formatOngoingScore(game.totalPoints)} className="game-info-pill score" />
-                          <Pill label={formatMonthDayYear(game.createdAt)} className="game-info-pill created" />
-                        </div>
-                      )}
-
-                      {game.mode === 'streak' && (
-                        <div className="game-info-pills">
-                          <Pill label={`${game.streak} Streak`} className="game-info-pill round" />
-                          <Pill label={formatMonthDayYear(game.createdAt)} className="game-info-pill created" />
-                        </div>
-                      )}
-
-                      <div className="ongoing-buttons">
-                        <button className="delete-button" onClick={() => openDeleteModal(game._id as string)}>
-                          <TrashIcon />
-                        </button>
-                        <a className="play-button" href={`/game/${game._id}`}>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="w-6 h-6"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </InfiniteScroll>
-            )}
-          </div>
-        )}
+        {renderContent()}
 
         <DestroyModal
-          isOpen={deleteModalOpen}
-          onClose={() => setDeleteModalOpen(false)}
-          onAction={() => handleDeleteGame()}
-          title="Delete Game"
-          message="Are you sure you want to permanently delete this game?"
-          isSubmitting={isDeleting}
+          isOpen={!!gameToRemove}
+          onClose={() => setGameToRemove(null)}
+          onAction={() => gameToRemove && removeGame(gameToRemove)}
+          title={gameToRemove ? `Remove your ${getOngoingGameTitle(gameToRemove)} game?` : 'Remove game?'}
+          message={gameToRemove ? removeMessage(gameToRemove) : ''}
+          isSubmitting={isSubmitting}
+          actionLabel="Remove game"
+        />
+
+        <DestroyModal
+          isOpen={clearModalOpen}
+          onClose={() => setClearModalOpen(false)}
+          onAction={() => clearUnstartedGames()}
+          title={`Clear ${notStartedCount} unstarted ${notStartedCount === 1 ? 'game' : 'games'}?`}
+          message="These are games you opened but never made a guess in. Challenges are not affected."
+          isSubmitting={isSubmitting}
+          actionLabel="Clear games"
+        />
+
+        <AuthModal
+          isOpen={authModalOpen}
+          closeModal={() => setAuthModalOpen(false)}
+          mode="login"
+          heading="Sign in to see your games"
+          subheading="Your unfinished games are saved to your account."
         />
       </WidthController>
     </StyledOngoingGamesPage>

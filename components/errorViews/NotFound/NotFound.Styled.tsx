@@ -38,6 +38,31 @@ const StyledNotFound = styled.div<StyledProps>`
       text-align: center;
       line-height: 23px;
     }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 24px;
+      user-select: auto;
+
+      a {
+        padding: 11px 20px;
+        border-radius: 10px;
+        background-color: var(--background3);
+        border: 1px solid #333538;
+        color: var(--color2);
+        font-size: 15px;
+        font-weight: 500;
+
+        &.primary {
+          background-color: var(--indigo-600);
+          border-color: var(--indigo-600);
+          color: #fff;
+        }
+      }
+    }
   }
 `
 

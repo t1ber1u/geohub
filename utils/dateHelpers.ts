@@ -90,3 +90,10 @@ export const formatTimeAgo = (dateRaw: Date | undefined) => {
 
   return 'just now'
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+// Whole days left until a date, counting part of a day as a day (0 once it has passed)
+export const getDaysLeft = (dateRaw: Date | string) => {
+  return Math.max(0, Math.ceil((new Date(dateRaw).getTime() - Date.now()) / DAY_MS))
+}

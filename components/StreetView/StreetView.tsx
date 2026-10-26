@@ -1,5 +1,6 @@
 import React, { FC, useEffect, useRef, useState } from 'react'
 import { Game } from '@backend/models'
+import { GameExitButton } from '@components/GameExitButton'
 import { GameStatus } from '@components/GameStatus'
 import { GuessMap } from '@components/GuessMap'
 import { LoadingPage } from '@components/layout'
@@ -319,6 +320,7 @@ const Streetview: FC<Props> = ({ gameData, setGameData, view, setView }) => {
 
         <div id="streetview">
           <StreetViewControls handleBackToStart={handleBackToStart} handleUndoLastMove={gameData.gameSettings.canMove ? handleUndoLastMove : undefined} />
+          {view === 'Game' && <GameExitButton gameId={gameData._id?.toString()} />}
           {view === 'Game' && <GameStatus gameData={gameData} handleSubmitGuess={handleSubmitGuess} />}
 
           {gameData.mode === 'standard' && (

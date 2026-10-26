@@ -11,5 +11,13 @@ export { default as getUserId } from './getUserId'
 export { default as isUserAnAdmin } from './isUserAnAdmin'
 export { default as isUserBanned } from './isUserBanned'
 export { monthAgo, dayAgo, weekAgo, todayStart, todayEnd } from './queryDates'
+export {
+  ONGOING_GAME_TTL_DAYS,
+  abandonGames,
+  expireStaleGames,
+  getExpiresAt,
+  isGameExpired,
+  lastPlayedExpr,
+} from './ongoingGames'
 export { default as SendEmail } from './sendEmail'
 export { default as throwError } from './throwError'

@@ -1,5 +1,6 @@
 import type { NextPage } from 'next'
 import Image from 'next/image'
+import { ContinuePlaying } from '@components/ContinuePlaying'
 import { GamemodeCard } from '@components/GamemodeCard'
 import { MapPreviewCard } from '@components/MapPreviewCard'
 import { Meta } from '@components/Meta'
@@ -38,6 +39,8 @@ const Home: NextPage = () => {
       </div>
 
       <div className="main-content">
+        <ContinuePlaying />
+
         <div className="map-preview-section">
           {officialMaps.map((map, idx) => (
             <MapPreviewCard key={idx} map={map} showDescription />

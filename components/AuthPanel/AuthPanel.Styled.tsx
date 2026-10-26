@@ -110,7 +110,7 @@ const StyledAuthPanel = styled.div`
       right: 12px;
       padding: 2px 8px;
       border-radius: 999px;
-      background-color: var(--indigo-600, #4f46e5);
+      background-color: var(--indigo-600);
       color: #fff;
       font-size: 11px;
       font-weight: 600;

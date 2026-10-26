@@ -2,7 +2,7 @@ import { ObjectId } from 'mongodb'
 import { NextApiRequest, NextApiResponse } from 'next'
 import { Game } from '@backend/models'
 import getMapFromGame from '@backend/queries/getMapFromGame'
-import { collections, getUserId, throwError } from '@backend/utils'
+import { abandonGames, collections, getUserId, isGameExpired, throwError } from '@backend/utils'
 import { userProject } from '@backend/utils/dbProjects'
 
 const getGame = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -34,6 +34,15 @@ const getGame = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   const game = gameQuery[0] as Game
+
+  // a game left unplayed past its expiry ends when it is next opened, even if the cleanup job hasn't run
+  if (isGameExpired(game)) {
+    await abandonGames({ _id: game._id }, 'expired')
+    game.state = 'abandoned'
+    game.abandonReason = 'expired'
+    game.rounds = []
+    game.guesses = []
+  }
   const gameBelongsToUser = userId === game.userId.toString()
   const mapDetails = await getMapFromGame(game)
 

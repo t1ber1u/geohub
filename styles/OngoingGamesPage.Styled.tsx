@@ -2,198 +2,128 @@ import styled from 'styled-components'
 
 const StyledOngoingGamesPage = styled.div`
   height: 100%;
+  padding-bottom: 40px;
 
-  .ongoing-banner {
-    background-color: #181818;
-    color: var(--color2);
-    border-radius: 6px;
-    padding: 16px;
+  .page-intro {
+    display: grid;
+    gap: 16px;
     margin-bottom: 20px;
+  }
+
+  .intro-text {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    max-width: 720px;
+    color: var(--color3);
+    font-size: 15px;
+    line-height: 1.5;
+
+    svg {
+      flex-shrink: 0;
+      height: 20px;
+      margin-top: 1px;
+      color: var(--color4);
+    }
+  }
+
+  .toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    flex-wrap: wrap;
+    gap: 10px;
 
-    .message {
+    .games-count {
+      font-size: 14px;
+      color: var(--color4);
+    }
+
+    .clear-button {
+      padding: 8px 14px;
+      border-radius: 8px;
+      background-color: var(--background3);
+      border: 1px solid #333538;
+      color: var(--color2);
+      font-size: 14px;
+      font-weight: 500;
+
+      &:hover {
+        background-color: var(--background4);
+      }
+    }
+  }
+
+  .games-list {
+    display: grid;
+    gap: 12px;
+    overflow: visible !important;
+  }
+
+  .card-skeleton {
+    height: 92px;
+    border-radius: 12px;
+    background-color: var(--background2);
+    border: 1px solid #222325;
+  }
+
+  .list-loader {
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 56px 20px;
+    border-radius: 14px;
+    background-color: var(--background2);
+    border: 1px solid #262729;
+
+    .empty-icon {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      font-weight: 400;
-
-      span {
-        position: relative;
-        top: 1px;
-      }
+      justify-content: center;
+      height: 56px;
+      width: 56px;
+      margin-bottom: 18px;
+      border-radius: 50%;
+      background-color: rgba(99, 102, 241, 0.14);
 
       svg {
-        height: 20px;
-      }
-    }
-  }
-
-  .ongoing-table {
-    background-color: var(--background2);
-    border: 1px solid rgb(30 30 30);
-    border-radius: 6px;
-  }
-
-  .ongoing-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 1rem;
-
-    &.variant {
-      background-color: #181818;
-    }
-
-    .game-detail {
-      color: #8e8e8e;
-      font-weight: 400;
-      font-size: 1rem;
-
-      &:not(:first-child) {
-        padding-left: 20px;
+        height: 28px;
+        color: var(--indigo-300);
       }
     }
 
-    &:not(:last-child) {
-      border-bottom: 1px solid rgb(30 30 30);
+    h2 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--color1);
     }
 
-    .flex-left {
-      display: flex;
-      align-items: center;
-
-      .map-details {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-
-        .mapNameWrapper {
-          display: grid;
-
-          .mapName {
-            font-size: 1.125rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-
-            @media (max-width: 800px) {
-              font-size: 1rem;
-            }
-
-            @media (max-width: 600px) {
-              font-size: 14px;
-            }
-          }
-        }
-      }
-
-      .game-details {
-        color: #8e8e8e;
-        font-weight: 400;
-        font-size: 1rem;
-      }
+    p {
+      margin-top: 8px;
+      max-width: 420px;
+      color: var(--color4);
+      font-size: 15px;
+      line-height: 1.5;
     }
 
-    .flex-right {
-      display: flex;
-      align-items: center;
-      gap: 30px;
-      flex-shrink: 0;
+    .empty-action {
+      margin-top: 22px;
+      padding: 12px 22px;
+      border-radius: 10px;
+      background-color: var(--indigo-600);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
 
-      @media (max-width: 600px) {
-        gap: 10px;
-      }
-
-      .game-info-pills {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-
-        .game-info-pill {
-          letter-spacing: 0.06rem;
-          font-family: var(--font-mono);
-          background: rgb(200 200 200 / 8%);
-          color: #ffffff82;
-          padding: 2px 14px 0 14px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          text-transform: uppercase;
-          width: fit-content;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 500;
-          height: 30px;
-
-          @media (max-width: 900px) {
-            &.score {
-              display: none;
-            }
-          }
-
-          @media (max-width: 800px) {
-            &.created {
-              display: none;
-            }
-          }
-
-          @media (max-width: 650px) {
-            &.round {
-              display: none;
-            }
-          }
-
-          span {
-            position: relative;
-            top: -1px;
-          }
-        }
-      }
-
-      .ongoing-buttons {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-
-        @media (max-width: 600px) {
-          gap: 10px;
-        }
-
-        .play-button,
-        .delete-button {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 5px;
-          padding: 10px;
-          font-size: 1rem;
-          font-weight: 500;
-          user-select: none;
-          background-color: var(--mediumPurple);
-          color: rgb(255, 255, 255, 0.7);
-
-          &.delete-button {
-            background-color: rgb(255, 255, 255, 0.1);
-          }
-
-          svg {
-            height: 20px;
-            color: #fff;
-          }
-
-          &:hover {
-            background-color: var(--indigo-600);
-
-            &.delete-button {
-              background-color: #991b1b;
-            }
-          }
-        }
+      &:hover {
+        background-color: var(--indigo-500);
       }
     }
   }

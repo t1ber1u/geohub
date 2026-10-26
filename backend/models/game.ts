@@ -22,8 +22,11 @@ type Game = {
   challengeId?: ObjectId | string | null
   userDetails?: User
   createdAt?: Date
+  lastPlayedAt?: Date // when the last guess was made; unfinished games expire 30 days after it
   mapDetails?: MapType
-  state: 'started' | 'finished'
+  // abandoned: an unfinished game that expired or that its player removed
+  state: 'started' | 'finished' | 'abandoned'
+  abandonReason?: 'expired' | 'removed'
   mode: 'standard' | 'streak'
   streak: number
   isDailyChallenge?: boolean

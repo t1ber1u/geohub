@@ -44,6 +44,7 @@ const createChallengeGame = async (req: NextApiRequest, res: NextApiResponse) =>
     state: 'started',
     isDailyChallenge,
     createdAt: new Date(),
+    lastPlayedAt: new Date(),
   }
 
   // Create game that is associated with this challenge

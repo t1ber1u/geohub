@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import Game from '@backend/models/game'
@@ -66,6 +67,33 @@ const GamePage: PageType = () => {
 
   if (!gameData) {
     return <LoadingPage />
+  }
+
+  // an unfinished game that expired or was removed can't be continued; point the player somewhere useful
+  if (gameData.state === 'abandoned') {
+    const isStreak = gameData.mode === 'streak'
+    const mapName = isStreak ? 'Country Streaks' : gameData.mapDetails?.name
+
+    return (
+      <NotFound
+        title="This game has ended"
+        message={
+          gameData.abandonReason === 'removed'
+            ? 'You removed it from your ongoing games, so it can no longer be continued.'
+            : "It wasn't played for 30 days, so it was removed from your ongoing games."
+        }
+        actions={
+          <>
+            <Link href={isStreak ? '/streaks' : `/map/${gameData.mapId}`}>
+              <a className="primary">{mapName ? `Play ${mapName} again` : 'Play again'}</a>
+            </Link>
+            <Link href="/ongoing">
+              <a>Ongoing games</a>
+            </Link>
+          </>
+        }
+      />
+    )
   }
 
   return (

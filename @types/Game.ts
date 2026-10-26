@@ -15,8 +15,10 @@ type Game = {
   rounds: LocationType[]
   gameSettings: GameSettingsType
   createdAt?: Date
+  lastPlayedAt?: Date
   mapDetails?: MapType[]
-  state: 'started' | 'finished'
+  state: 'started' | 'finished' | 'abandoned'
+  abandonReason?: 'expired' | 'removed'
   mode: 'standard' | 'streak'
   streak: number
   isDailyChallenge?: boolean

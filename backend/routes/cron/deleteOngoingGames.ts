@@ -1,20 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { collections, monthAgo, throwError } from '@backend/utils'
-import { daysAgo } from '@backend/utils/queryDates'
+import { collections, expireStaleGames } from '@backend/utils'
 
+// Ends every unfinished game that hasn't been played for 30 days (see backend/utils/ongoingGames)
 const deleteOngoingGames = async (req: NextApiRequest, res: NextApiResponse) => {
-  const deleteResult = await collections.games?.deleteMany({
-    state: { $ne: 'finished' },
-    createdAt: { $lt: daysAgo(30) },
-  })
+  const expired = await expireStaleGames()
 
-  if (!deleteResult) {
-    return throwError(res, 500, 'Failed to delete ongoing games')
-  }
+  await collections.analytics?.findOneAndUpdate({}, { $inc: { deletedOngoingGames: expired } })
 
-  await collections.analytics?.findOneAndUpdate({}, { $inc: { deletedOngoingGames: deleteResult.deletedCount } })
-
-  res.status(200).send(`Successfully deleted ${deleteResult.deletedCount} games`)
+  res.status(200).send(`Expired ${expired} unfinished games`)
 }
 
 export default deleteOngoingGames
