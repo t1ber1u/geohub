@@ -34,5 +34,11 @@
     "name": "Asia",
     "description": "From Tokyo's neon streets to Himalayan valleys, explore Asia!",
     "previewImg": "official2.jpg"
+  },
+  {
+    "_id": "6185e0557b54baf63473a545",
+    "name": "Australia",
+    "description": "From Sydney Harbour to the red centre, explore the land down under!",
+    "previewImg": "official30.jpg"
   }
 ]

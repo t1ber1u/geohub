@@ -85,9 +85,21 @@ const StyledHomePage = styled.div`
 
     .map-preview-section {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 1.2rem;
       z-index: 1;
+
+      // four cards a row are narrower, so give the descriptions a third line instead of cutting them off
+      @media (min-width: 1301px) {
+        .mapDescription {
+          -webkit-line-clamp: 3;
+          height: 75px;
+        }
+      }
+
+      @media (max-width: 1300px) {
+        grid-template-columns: repeat(3, 1fr);
+      }
 
       @media (max-width: 1000px) {
         grid-template-columns: 1fr 1fr;
