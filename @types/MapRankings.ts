@@ -48,6 +48,8 @@ type MapRankings = {
   entries: RankingsEntry[]
   me: RankingsMe | null
   records: RankingsRecords
+  // how the ranked players' scores are spread, in bins of binSize points
+  distribution: { binSize: number; counts: number[]; average: number }
 }
 
 export default MapRankings

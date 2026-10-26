@@ -12,6 +12,8 @@ import {
 
 const TOP_ENTRIES = 10
 const PERFECT_ROUND_POINTS = 5000
+const MAX_POINTS = 25000
+const DISTRIBUTION_BIN = 1000
 const DAY_MS = 24 * 60 * 60 * 1000
 const PERIODS: RankingsPeriod[] = ['today', 'week', 'all']
 const RULES: RankingsRules[] = ['moving', 'nomove', 'nmpz']
@@ -202,6 +204,7 @@ const getMapRankings = async (req: NextApiRequest, res: NextApiResponse) => {
             : null,
         }
       : null,
+    distribution: getDistribution(ranked.map(({ game }) => game.totalPoints)),
     records: {
       closestGuess: records.closestGuess && withUser(records.closestGuess),
       fastestPerfect: records.fastestPerfect && withUser(records.fastestPerfect),
@@ -210,6 +213,15 @@ const getMapRankings = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   res.status(200).send(result)
+}
+
+const getDistribution = (scores: number[]) => {
+  const counts = new Array(MAX_POINTS / DISTRIBUTION_BIN).fill(0)
+  scores.forEach((score) => counts[Math.min(counts.length - 1, Math.floor(score / DISTRIBUTION_BIN))]++)
+
+  const average = scores.length ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : 0
+
+  return { binSize: DISTRIBUTION_BIN, counts, average }
 }
 
 // Round-level records across the same games the leaderboard ranks

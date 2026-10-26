@@ -8,8 +8,11 @@ import { useAppSelector } from '@redux/hook'
 import { MapRankingsType, RankingsAttempt, RankingsEntry, RankingsPeriod, RankingsRules } from '@types'
 import { formatDistance, formatLargeNumber, formatRoundTime, mailman, showToast } from '@utils/helpers'
 import { StyledMapRankings } from './'
+import ScoreDistribution from './ScoreDistribution'
 
 const MAX_POINTS = 25000
+// fewer players than this make a histogram of one or two bars, which says nothing
+const MIN_PLAYERS_FOR_DISTRIBUTION = 3
 
 const PERIOD_OPTIONS: { value: RankingsPeriod; label: string; hint?: string }[] = [
   { value: 'today', label: 'Today', hint: 'Resets daily at 00:00 UTC' },
@@ -361,6 +364,14 @@ const MapRankings: FC<Props> = ({ mapId, onPlay }) => {
 
         {summary && <div className="my-summary">{summary}</div>}
       </div>
+
+      {totalPlayers >= MIN_PLAYERS_FOR_DISTRIBUTION && (
+        <ScoreDistribution
+          distribution={rankings.distribution}
+          myPoints={me?.totalPoints}
+          isFirstAttempt={isFirstAttempt}
+        />
+      )}
 
       <div className="records">
         {renderRecord(

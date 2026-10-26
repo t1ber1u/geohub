@@ -448,6 +448,170 @@ const StyledMapRankings = styled.div`
     }
   }
 
+  .distribution {
+    display: grid;
+    gap: 12px;
+    padding: 16px 20px 14px;
+    border-top: var(--border);
+
+    @media (max-width: 1000px) {
+      padding: 14px 16px 12px;
+    }
+  }
+
+  .distribution-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  .section-title {
+    color: var(--color4);
+    font-size: 12px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .distribution-caption {
+    color: var(--color4);
+    font-size: 13px;
+    font-weight: 400;
+  }
+
+  .histogram {
+    padding-top: 18px;
+  }
+
+  .plot {
+    position: relative;
+    display: flex;
+    height: 88px;
+    border-bottom: 1px solid #333;
+  }
+
+  .bin {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+
+    .bar {
+      width: min(24px, calc(100% - 2px));
+      border-radius: 4px 4px 0 0;
+      background-color: #4a4a52;
+    }
+
+    &.mine .bar {
+      background-color: var(--indigo-400);
+    }
+
+    &:hover .bar {
+      filter: brightness(1.25);
+    }
+
+    .you-label {
+      position: absolute;
+      top: -18px;
+      color: var(--color2);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .bin-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background-color: #2b2b2e;
+      box-shadow: 0 0 0 1px #3d3d42, 0 6px 16px rgba(0, 0, 0, 0.4);
+      color: var(--color3);
+      font-size: 12px;
+      font-weight: 400;
+      white-space: nowrap;
+      pointer-events: none;
+
+      strong {
+        display: block;
+        color: #fff;
+        font-weight: 600;
+      }
+    }
+
+    &:hover .bin-tooltip {
+      display: block;
+    }
+
+    &:first-child .bin-tooltip {
+      left: 0;
+      transform: none;
+    }
+
+    &:last-child .bin-tooltip {
+      left: auto;
+      right: 0;
+      transform: none;
+    }
+  }
+
+  .average-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-left: 2px dashed var(--color4);
+    pointer-events: none;
+
+    span {
+      position: absolute;
+      top: -18px;
+      left: 4px;
+      color: var(--color4);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+  }
+
+  .axis {
+    position: relative;
+    height: 18px;
+    margin-top: 4px;
+
+    span {
+      position: absolute;
+      transform: translateX(-50%);
+      color: var(--color4);
+      font-size: 11px;
+      font-weight: 400;
+
+      &:first-child {
+        transform: none;
+      }
+
+      &:last-child {
+        transform: translateX(-100%);
+      }
+    }
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
   .records {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
