@@ -40,6 +40,7 @@ Once you have an account, you are ready to play! You can click play on any of th
 - [Canada](https://www.geohub.gg/map/6185dff27b54baf63473a541)
 - [United States](https://www.geohub.gg/map/6185e0077b54baf63473a542)
 - [Europe](https://www.geohub.gg/map/6185e0217b54baf63473a543)
+- [Asia](https://www.geohub.gg/map/6185e03b7b54baf63473a544)
 
 Or you can click on the `Find Maps` link on the sidebar to navigate between all the different supported country maps and community favorites!
 

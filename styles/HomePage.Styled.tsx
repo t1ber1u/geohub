@@ -85,27 +85,9 @@ const StyledHomePage = styled.div`
 
     .map-preview-section {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 1.2rem;
       z-index: 1;
-
-      // five cards across are narrow: let names and descriptions fit instead of truncating
-      @media (min-width: 1351px) {
-        .mapName {
-          font-size: 18px;
-          padding: 0 0.5rem;
-        }
-
-        .mapDescription {
-          padding: 0 1rem;
-          -webkit-line-clamp: 3;
-          height: 75px;
-        }
-      }
-
-      @media (max-width: 1350px) {
-        grid-template-columns: repeat(3, 1fr);
-      }
 
       @media (max-width: 1000px) {
         grid-template-columns: 1fr 1fr;

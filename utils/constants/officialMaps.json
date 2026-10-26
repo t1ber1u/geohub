@@ -28,5 +28,11 @@
     "name": "Europe",
     "description": "From Nordic fjords to Mediterranean coasts, explore Europe!",
     "previewImg": "official16.jpg"
+  },
+  {
+    "_id": "6185e03b7b54baf63473a544",
+    "name": "Asia",
+    "description": "From Tokyo's neon streets to Himalayan valleys, explore Asia!",
+    "previewImg": "official2.jpg"
   }
 ]
