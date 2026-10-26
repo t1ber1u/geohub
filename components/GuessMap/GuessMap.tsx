@@ -93,8 +93,8 @@ const GuessMap: FC<Props> = ({
 
     const { bounds, scoreFactor } = gameData.mapDetails
 
-    // Zoom in for smaller maps
-    if (bounds && scoreFactor && scoreFactor < 1000) {
+    // Zoom in on any map smaller than the whole world (continents too); the World map's factor is 2000
+    if (bounds && scoreFactor && scoreFactor < 2000) {
       const { min, max } = bounds
 
       const googleBounds = new google.maps.LatLngBounds(
