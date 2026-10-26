@@ -22,5 +22,11 @@
     "name": "United States",
     "description": "The land of the free! 50 states of locations waiting for you.",
     "previewImg": "official4.jpg"
+  },
+  {
+    "_id": "6185e0217b54baf63473a543",
+    "name": "Europe",
+    "description": "From Nordic fjords to Mediterranean coasts, explore Europe!",
+    "previewImg": "official16.jpg"
   }
 ]

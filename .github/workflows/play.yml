@@ -62,7 +62,7 @@ jobs:
 
       - name: Seed official maps (only if missing)
         run: |
-          for entry in "6185df7a7b54baf63473a53e scripts/seed.js" "6185dfd47b54baf63473a540 scripts/seed-landmarks.js" "6185dff27b54baf63473a541 scripts/seed-canada.js" "6185e0077b54baf63473a542 scripts/seed-us.js"; do
+          for entry in "6185df7a7b54baf63473a53e scripts/seed.js" "6185dfd47b54baf63473a540 scripts/seed-landmarks.js" "6185dff27b54baf63473a541 scripts/seed-canada.js" "6185e0077b54baf63473a542 scripts/seed-us.js" "6185e0217b54baf63473a543 scripts/seed-europe.js"; do
             set -- $entry
             set +e
             MAP_ID=$1 node -e "
