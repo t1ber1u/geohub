@@ -1,24 +1,21 @@
-import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { WidthController } from '@components/layout'
 import { MapLeaderboard } from '@components/MapLeaderboard'
 import { Meta } from '@components/Meta'
-import { GameSettingsModal } from '@components/modals'
+import { AuthModal, GameSettingsModal } from '@components/modals'
 import { SkeletonLeaderboard, SkeletonMapInfo } from '@components/skeletons'
 import { StreakMapStats } from '@components/StreakMapStats'
 import { Avatar, Button } from '@components/system'
 import { VerifiedBadge } from '@components/VerifiedBadge'
-import { useAppSelector } from '@redux/hook'
 import StyledPlayStreaksPage from '@styles/PlayStreaksPage.Styled'
 import { MapLeaderboardType, StreakStatsType } from '@types'
 import { COUNTRY_STREAK_DETAILS } from '@utils/constants/random'
 import { mailman, showToast } from '@utils/helpers'
+import { useSignInToPlay } from '@utils/hooks'
 
 const StreaksPage = () => {
   const [streakStats, setStreakStats] = useState<StreakStatsType>()
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
-  const user = useAppSelector((state) => state.user)
-  const router = useRouter()
 
   useEffect(() => {
     getStreakStats()
@@ -34,13 +31,7 @@ const StreaksPage = () => {
     setStreakStats(res)
   }
 
-  const handleClickPlay = () => {
-    if (!user.id) {
-      return router.push('/register')
-    }
-
-    setSettingsModalOpen(true)
-  }
+  const { requestPlay: handleClickPlay, authModalProps } = useSignInToPlay(() => setSettingsModalOpen(true))
 
   return (
     <StyledPlayStreaksPage>
@@ -89,6 +80,12 @@ const StreaksPage = () => {
         closeModal={() => setSettingsModalOpen(false)}
         mapDetails={COUNTRY_STREAK_DETAILS}
         gameMode="streak"
+      />
+
+      <AuthModal
+        {...authModalProps}
+        heading="Sign in to play Country Streaks"
+        subheading="It's free. Your best streak is saved and ranked on the leaderboard."
       />
     </StyledPlayStreaksPage>
   )

@@ -5,15 +5,16 @@ import { DailyChallengeWinners } from '@components/DailyChallengeWinners'
 import { WidthController } from '@components/layout'
 import { MapLeaderboard } from '@components/MapLeaderboard'
 import { Meta } from '@components/Meta'
+import { AuthModal } from '@components/modals'
 import { SkeletonLeaderboard, SkeletonMapInfo } from '@components/skeletons'
 import { Avatar, Button } from '@components/system'
 import { VerifiedBadge } from '@components/VerifiedBadge'
 import { CheckIcon } from '@heroicons/react/outline'
-import { useAppSelector } from '@redux/hook'
 import StyledDailyChallengePage from '@styles/DailyChallengePage.Styled'
 import { DailyChallengeStatsType, MapLeaderboardType } from '@types'
 import { DAILY_CHALLENGE_DETAILS } from '@utils/constants/random'
 import { mailman, showToast } from '@utils/helpers'
+import { useSignInToPlay } from '@utils/hooks'
 
 const DailyChallengePage: FC = () => {
   const [mapStats, setMapStats] = useState<DailyChallengeStatsType | null>()
@@ -22,7 +23,6 @@ const DailyChallengePage: FC = () => {
   const [usersGameState, setUsersGameState] = useState<'started' | 'finished' | 'notStarted'>('notStarted')
   const [challengeId, setChallengeId] = useState()
 
-  const user = useAppSelector((state) => state.user)
   const router = useRouter()
 
   useEffect(() => {
@@ -53,13 +53,11 @@ const DailyChallengePage: FC = () => {
     setPreviousWinners(res)
   }
 
-  const startDailyChallenge = async () => {
-    if (!user.id) {
-      return router.push('/register')
-    }
-
-    router.push(usersGameState === 'finished' ? `/results/challenge/${challengeId}` : `/challenge/${challengeId}`)
-  }
+  const { requestPlay: startDailyChallenge, authModalProps } = useSignInToPlay(
+    () =>
+      router.push(usersGameState === 'finished' ? `/results/challenge/${challengeId}` : `/challenge/${challengeId}`),
+    !!challengeId,
+  )
 
   return (
     <StyledDailyChallengePage>
@@ -122,6 +120,12 @@ const DailyChallengePage: FC = () => {
           {previousWinners ? <DailyChallengeWinners prevWinners={previousWinners} /> : <SkeletonLeaderboard />}
         </div>
       </WidthController>
+
+      <AuthModal
+        {...authModalProps}
+        heading="Sign in to play the Daily Challenge"
+        subheading="It's free. Everyone gets the same 5 locations today. See how you rank."
+      />
     </StyledDailyChallengePage>
   )
 }

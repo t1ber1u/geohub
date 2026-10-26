@@ -1,41 +1,46 @@
-import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { FC } from 'react'
-import { Button, Modal } from '@components/system'
+import { AuthMode, AuthPanel } from '@components/AuthPanel'
+import { Modal } from '@components/system'
 import { XIcon } from '@heroicons/react/outline'
 import { StyledAuthModal } from './'
 
 type Props = {
   isOpen: boolean
   closeModal: () => void
+  mode?: AuthMode
+  // where Google/Apple/Facebook bring the player back to (defaults to the current page)
+  callbackUrl?: string
+  // called after an in-place email sign-in, e.g. to start the game they were about to play
+  onSuccess?: () => void
+  heading?: string
+  subheading?: string
 }
 
-const AuthModal: FC<Props> = ({ isOpen, closeModal }) => {
+// Sign in without leaving the page, e.g. when a logged out player presses Play
+const AuthModal: FC<Props> = ({ isOpen, closeModal, mode = 'signup', callbackUrl, onSuccess, heading, subheading }) => {
+  const router = useRouter()
+
+  const handleSuccess = () => {
+    closeModal()
+    onSuccess?.()
+  }
+
   return (
-    <Modal isOpen={isOpen} onClose={closeModal} maxWidth="400px">
+    <Modal isOpen={isOpen} onClose={closeModal} maxWidth="440px">
       <StyledAuthModal>
-        <div className="header">
-          <h1 className="modal-title">Login To GeoHub</h1>
-          <button className="close-button" onClick={closeModal}>
-            <XIcon />
-          </button>
-        </div>
+        <button className="close-button" onClick={closeModal} aria-label="Close">
+          <XIcon />
+        </button>
 
         <div className="mainContent">
-          <div className="buttonsWrapper">
-            <Link href="/login">
-              <a>
-                <Button variant="solidCustom" backgroundColor="#3d3d3d" color="#fff" hoverColor="#444" width="100%">
-                  Login
-                </Button>
-              </a>
-            </Link>
-
-            <Link href="/register">
-              <a>
-                <Button width="100%">Sign Up</Button>
-              </a>
-            </Link>
-          </div>
+          <AuthPanel
+            initialMode={mode}
+            callbackUrl={callbackUrl || router.asPath}
+            onSuccess={handleSuccess}
+            heading={heading}
+            subheading={subheading}
+          />
         </div>
       </StyledAuthModal>
     </Modal>

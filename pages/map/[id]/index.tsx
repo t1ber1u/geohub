@@ -7,15 +7,15 @@ import { MapPreviewCard } from '@components/MapPreviewCard'
 import { MapRankings } from '@components/MapRankings'
 import { MapStats } from '@components/MapStats'
 import { Meta } from '@components/Meta'
-import { GameSettingsModal } from '@components/modals'
+import { AuthModal, GameSettingsModal } from '@components/modals'
 import { SkeletonCards, SkeletonMapInfo } from '@components/skeletons'
 import { Avatar, Button } from '@components/system'
 import { TextWithLinks } from '@components/TextWithLinks'
 import { VerifiedBadge } from '@components/VerifiedBadge'
-import { useAppSelector } from '@redux/hook'
 import StyledMapPage from '@styles/MapPage.Styled'
 import { MapType } from '@types'
 import { mailman, showToast } from '@utils/helpers'
+import { useSignInToPlay } from '@utils/hooks'
 
 const MapPage: FC = () => {
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
@@ -24,7 +24,6 @@ const MapPage: FC = () => {
 
   const router = useRouter()
   const mapId = router.query.id
-  const user = useAppSelector((state) => state.user)
 
   useEffect(() => {
     if (!mapId) {
@@ -55,13 +54,7 @@ const MapPage: FC = () => {
     setOtherMaps(res)
   }
 
-  const handleClickPlay = () => {
-    if (!user.id) {
-      return router.push('/register')
-    }
-
-    setSettingsModalOpen(true)
-  }
+  const { requestPlay: handleClickPlay, authModalProps } = useSignInToPlay(() => setSettingsModalOpen(true))
 
   if (mapDetails === null) {
     // router.replace('/404')
@@ -146,6 +139,12 @@ const MapPage: FC = () => {
           gameMode="standard"
         />
       )}
+
+      <AuthModal
+        {...authModalProps}
+        heading={mapDetails ? `Sign in to play ${mapDetails.name}` : 'Sign in to play'}
+        subheading="It's free. Your scores are saved and ranked on the leaderboard."
+      />
     </StyledMapPage>
   )
 }

@@ -1,5 +1,6 @@
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { FC, useEffect, useState } from 'react'
 import { UserMenu } from '@components/dropdowns/UserMenu'
 import { Avatar } from '@components/system'
@@ -16,7 +17,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@redux/hook'
 import { updateRecentlyPlayed } from '@redux/slices'
 import { MapType } from '@types'
-import { mailman } from '@utils/helpers'
+import { getAuthPageUrl, mailman } from '@utils/helpers'
 import { StyledSidebar } from './'
 import { Item } from './Item'
 
@@ -24,6 +25,7 @@ const Sidebar: FC = () => {
   const [maps, setMaps] = useState<MapType[]>([])
   const user = useAppSelector((state) => state.user)
   const { data: session } = useSession()
+  const router = useRouter()
   const dispatch = useAppDispatch()
 
   useEffect(() => {
@@ -90,7 +92,7 @@ const Sidebar: FC = () => {
           {session && user.id ? (
             <UserMenu variant="sidebar" />
           ) : (
-            <Link href="/login">
+            <Link href={getAuthPageUrl('login', router.asPath)}>
               <a className="login-link">
                 <LoginIcon />
                 <span>Log in</span>

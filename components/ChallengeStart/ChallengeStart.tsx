@@ -1,6 +1,6 @@
 import Image from 'next/image'
-import { useRouter } from 'next/router'
-import { FC, useEffect, useState } from 'react'
+import { FC } from 'react'
+import { AuthModal } from '@components/modals'
 import { Avatar } from '@components/system'
 import {
   ArrowsExpandIcon,
@@ -12,7 +12,8 @@ import {
 import { useAppSelector } from '@redux/hook'
 import { ChallengeType, GameViewType } from '@types'
 import { MAP_AVATAR_PATH } from '@utils/constants/random'
-import { formatTimeLimit, redirectToRegister } from '@utils/helpers'
+import { formatTimeLimit } from '@utils/helpers'
+import { useSignInToPlay } from '@utils/hooks'
 import { StyledChallengeStart } from './'
 
 type Props = {
@@ -21,29 +22,14 @@ type Props = {
 }
 
 const ChallengeStart: FC<Props> = ({ challengeData, handleStartChallenge }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(true)
   const user = useAppSelector((state) => state.user)
-  const router = useRouter()
+  const { requestPlay, authModalProps } = useSignInToPlay(() => handleStartChallenge(challengeData))
 
   const CAN_MOVE = challengeData.gameSettings.canMove
   const CAN_PAN = challengeData.gameSettings.canPan
   const CAN_ZOOM = challengeData.gameSettings.canZoom
   const HAS_TIME_LIMIT = challengeData.gameSettings.timeLimit !== 0
   const TIME_LIMIT = challengeData.gameSettings.timeLimit
-
-  useEffect(() => {
-    if (!user.id) {
-      setIsLoggedIn(false)
-    }
-  }, [])
-
-  const handleButtonClick = () => {
-    if (isLoggedIn) {
-      handleStartChallenge(challengeData)
-    } else {
-      redirectToRegister(router)
-    }
-  }
 
   return (
     <StyledChallengeStart>
@@ -82,8 +68,8 @@ const ChallengeStart: FC<Props> = ({ challengeData, handleStartChallenge }) => {
             </div>
           )}
 
-          <button className="challengeBtn" onClick={() => handleButtonClick()}>
-            {isLoggedIn ? 'Play Game' : 'Create Account'}
+          <button className="challengeBtn" onClick={() => requestPlay()}>
+            {user.id ? 'Play Game' : 'Sign in to play'}
           </button>
         </div>
       </div>
@@ -113,6 +99,16 @@ const ChallengeStart: FC<Props> = ({ challengeData, handleStartChallenge }) => {
           {CAN_ZOOM ? 'Zooming Allowed' : 'No Zoom'}
         </div>
       </div>
+
+      <AuthModal
+        {...authModalProps}
+        heading={
+          challengeData.isDailyChallenge
+            ? 'Sign in to play the Daily Challenge'
+            : `Sign in to take on ${challengeData.creatorName}'s challenge`
+        }
+        subheading="It's free, and only takes a moment."
+      />
     </StyledChallengeStart>
   )
 }

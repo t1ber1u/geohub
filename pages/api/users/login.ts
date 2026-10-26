@@ -12,7 +12,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
       const user = await collections.users?.findOne({ email: email })
 
-      if (!user) {
+      // accounts created with Google/Apple/Facebook have no password
+      if (!user || !user.password) {
         return throwError(res, 400, 'Incorrect email or password')
       }
 

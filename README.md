@@ -121,6 +121,32 @@ yarn dev
 
 Now, you should be able to see the site running locally at [http://localhost:3000](http://localhost:3000)
 
+### Sign in with Google, Apple or Facebook (optional)
+
+Email sign-up always works. Each social button appears once its keys are in `.env`. Leave them out and the button is hidden.
+Every provider needs the site's callback URL registered: `<NEXTAUTH_URL>/api/auth/callback/<google|apple|facebook>`,
+so the site needs a fixed address. A random `trycloudflare.com` URL changes on every run and won't work.
+
+```
+# Google: console.cloud.google.com > APIs & Services > Credentials > OAuth client ID (Web application)
+GOOGLE_CLIENT_ID="...apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="..."
+
+# Facebook: developers.facebook.com > Create app > Facebook Login > Settings (Valid OAuth Redirect URIs)
+FACEBOOK_CLIENT_ID="your-app-id"
+FACEBOOK_CLIENT_SECRET="your-app-secret"
+
+# Apple (needs a paid Apple Developer account and an https domain, localhost is not accepted):
+# Certificates, IDs & Profiles > Identifiers > Services ID (with Sign in with Apple) + Keys > a .p8 key
+APPLE_CLIENT_ID="your.services.id"
+APPLE_TEAM_ID="ABCDE12345"
+APPLE_KEY_ID="KEY1234567"
+APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+```
+
+The Apple client secret is signed from the .p8 key automatically and renewed while the server runs.
+A social sign-in whose email the provider has verified joins the existing GeoHub account with that email, so players keep one account however they sign in.
+
 ## 🐳 Docker
 
 You can also easily run the app using Docker and Docker Compose. To do this, first clone the repository. Get your Google Maps API key as explained above. Generate two random secrets for NextAuth and Cryptr with the `openssl rand -base64 32` command. Then, create a `.env` file in the root of the project with the following content:

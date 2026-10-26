@@ -2,11 +2,18 @@ import styled from 'styled-components'
 
 const StyledAuthPage = styled.div`
   width: 100%;
-  height: 100vh;
+  // min-height (not height) so a tall form or an open phone keyboard can scroll instead of clipping
+  min-height: 100vh;
+  padding: 88px 16px 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: #121212;
+
+  @media (max-width: 600px) {
+    align-items: flex-start;
+    padding-top: 72px;
+  }
 
   .authContainer {
     max-width: 400px;
@@ -23,6 +30,15 @@ const StyledAuthPage = styled.div`
       border: none;
       padding: 2rem 1rem;
       background-color: inherit;
+    }
+
+    &.panelContainer {
+      max-width: 440px;
+      padding: 36px 32px 28px;
+
+      @media (max-width: 600px) {
+        padding: 8px 0;
+      }
     }
   }
 

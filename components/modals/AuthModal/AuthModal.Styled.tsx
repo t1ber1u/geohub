@@ -1,55 +1,37 @@
 import styled from 'styled-components'
 
 const StyledAuthModal = styled.div`
-  .header {
-    padding: 16px;
+  position: relative;
+  background-color: #151515;
+
+  .close-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 1;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid #282828;
+    justify-content: center;
+    background: transparent;
+    color: var(--color4);
+    padding: 6px;
+    border-radius: 8px;
 
-    .modal-title {
-      font-size: 18px;
-      font-weight: 400;
+    &:hover {
+      background-color: #222;
+      color: var(--color1);
     }
 
-    .close-button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: transparent;
-      color: var(--color2);
-      padding: 4px;
-      border-radius: 6px;
-
-      &:hover {
-        background-color: #222;
-      }
-
-      svg {
-        height: 24px;
-      }
+    svg {
+      height: 22px;
     }
   }
 
   .mainContent {
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #131314;
-  }
+    padding: 40px 32px 28px;
 
-  .buttonsWrapper {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 16px;
-
-    a {
-      width: 100%;
+    @media (max-width: 600px) {
+      padding: 44px 20px 24px;
     }
   }
 `

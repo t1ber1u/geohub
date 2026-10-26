@@ -92,7 +92,12 @@ const MapStats: FC<Props> = ({ map, setMap }) => {
         </div>
       </div>
 
-      <AuthModal isOpen={modalOpen} closeModal={() => setModalOpen(false)} />
+      <AuthModal
+        isOpen={modalOpen}
+        closeModal={() => setModalOpen(false)}
+        heading="Sign in to like maps"
+        subheading="Liked maps are saved to your account so you can find them again."
+      />
     </StyledMapStats>
   )
 }

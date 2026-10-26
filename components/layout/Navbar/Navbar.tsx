@@ -1,9 +1,11 @@
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { FC, useState } from 'react'
 import { UserMenu } from '@components/dropdowns/UserMenu'
 import { Button, Searchbar } from '@components/system'
 import { SearchIcon } from '@heroicons/react/outline'
+import { getAuthPageUrl } from '@utils/helpers'
 import { useAppSelector } from '../../../redux-utils'
 import { AppLogo } from '../../AppLogo'
 import { StyledNavbar } from './'
@@ -11,6 +13,7 @@ import { StyledNavbar } from './'
 const Navbar: FC = () => {
   const { data: session } = useSession()
   const user = useAppSelector((state) => state.user)
+  const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
 
   return (
@@ -47,7 +50,7 @@ const Navbar: FC = () => {
                 </div>
               ) : (
                 <>
-                  <Link href="/login">
+                  <Link href={getAuthPageUrl('login', router.asPath)}>
                     <a>
                       <Button variant="solidCustom" size="sm" backgroundColor="#3d3d3d" color="#fff" hoverColor="#444">
                         Log In
@@ -55,7 +58,7 @@ const Navbar: FC = () => {
                     </a>
                   </Link>
 
-                  <Link href="/register">
+                  <Link href={getAuthPageUrl('register', router.asPath)}>
                     <a>
                       <Button size="sm">Sign Up</Button>
                     </a>

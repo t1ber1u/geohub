@@ -4,7 +4,7 @@ import { NextRouter } from 'next/router'
 const redirectToRegister = (router: NextRouter) => {
   if (!router) return
 
-  router.push(`/register?callback=${router.asPath}`)
+  router.push(`/register?callbackUrl=${encodeURIComponent(router.asPath)}`)
 }
 
 export default redirectToRegister

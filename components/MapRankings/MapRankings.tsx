@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { FC, ReactNode, useEffect, useState } from 'react'
 import { SkeletonLeaderboard } from '@components/skeletons'
 import { Avatar, Button } from '@components/system'
@@ -6,7 +7,7 @@ import { ChartBarIcon, ClockIcon, InformationCircleIcon } from '@heroicons/react
 import { LightningBoltIcon, LocationMarkerIcon, StarIcon } from '@heroicons/react/solid'
 import { useAppSelector } from '@redux/hook'
 import { MapRankingsType, RankingsAttempt, RankingsEntry, RankingsPeriod, RankingsRules } from '@types'
-import { formatDistance, formatLargeNumber, formatRoundTime, mailman, showToast } from '@utils/helpers'
+import { formatDistance, formatLargeNumber, formatRoundTime, getAuthPageUrl, mailman, showToast } from '@utils/helpers'
 import { StyledMapRankings } from './'
 import ScoreDistribution from './ScoreDistribution'
 
@@ -66,6 +67,7 @@ const MapRankings: FC<Props> = ({ mapId, onPlay }) => {
   const [loading, setLoading] = useState(true)
   const [showHelp, setShowHelp] = useState(false)
   const user = useAppSelector((state) => state.user)
+  const router = useRouter()
 
   useEffect(() => {
     let cancelled = false
@@ -165,7 +167,7 @@ const MapRankings: FC<Props> = ({ mapId, onPlay }) => {
     if (!user.id) {
       return (
         <span>
-          <Link href="/login">
+          <Link href={getAuthPageUrl('login', router.asPath)}>
             <a className="summary-link">Log in</a>
           </Link>
           {' to see your rank'}

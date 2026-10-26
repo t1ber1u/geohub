@@ -4,6 +4,8 @@
 # The public URL is shown in the job summary. The game stays up for max ~6h; accounts/scores persist.
 # Repo secrets: GOOGLE_MAPS_API_KEY, MONGO_URI (pointing at 127.0.0.1:27017), CRYPTR_SECRET,
 # and optionally CF_ACCESS_CLIENT_ID / CF_ACCESS_CLIENT_SECRET (Cloudflare Access service token).
+# Social sign-in secrets (GOOGLE_*, FACEBOOK_*, APPLE_*) are passed through when set, but the providers only
+# accept registered callback URLs, so they need a fixed domain rather than the random quick-tunnel URL.
 name: Play GeoHub
 
 on:
@@ -102,6 +104,14 @@ jobs:
           CRYPTR_SECRET: ${{ secrets.CRYPTR_SECRET }}
           INTERNAL_API_SECRET: ${{ github.run_id }}-internal
           CRON_SECRET: ${{ github.run_id }}-cron
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          FACEBOOK_CLIENT_ID: ${{ secrets.FACEBOOK_CLIENT_ID }}
+          FACEBOOK_CLIENT_SECRET: ${{ secrets.FACEBOOK_CLIENT_SECRET }}
+          APPLE_CLIENT_ID: ${{ secrets.APPLE_CLIENT_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_KEY_ID: ${{ secrets.APPLE_KEY_ID }}
+          APPLE_PRIVATE_KEY: ${{ secrets.APPLE_PRIVATE_KEY }}
         run: |
           yarn start &
           for i in $(seq 1 30); do curl -sf localhost:3000 >/dev/null && break; sleep 2; done

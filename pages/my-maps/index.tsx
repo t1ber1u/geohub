@@ -103,7 +103,13 @@ const MyMapsPage: NextPage = () => {
 
         <CreateMapModal isOpen={createMapModalOpen} closeModal={() => setCreateMapModalOpen(false)} />
 
-        <AuthModal isOpen={authModalOpen} closeModal={() => setAuthModalOpen(false)} />
+        <AuthModal
+          isOpen={authModalOpen}
+          closeModal={() => setAuthModalOpen(false)}
+          onSuccess={() => setCreateMapModalOpen(true)}
+          heading="Sign in to create maps"
+          subheading="Build your own maps from any places you like and share them with friends."
+        />
 
         <DestroyModal
           isOpen={deleteModalOpen}
