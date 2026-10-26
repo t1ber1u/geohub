@@ -92,9 +92,9 @@ async function main() {
     { _id: mapId },
     {
       $set: {
-        name: 'A Diverse World',
-        description: 'Locations from all around the world',
-        previewImg: 'official1.jpg',
+        name: 'World',
+        description: 'The classic game mode we all love, any country is fair game!',
+        previewImg: 'official15.jpg',
         creator: 'GeoHub',
         isPublished: true,
         locationCount: SPOTS.length,
