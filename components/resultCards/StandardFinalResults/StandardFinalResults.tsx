@@ -1,6 +1,7 @@
 import router from 'next/router'
 import { FC, useEffect, useState } from 'react'
 import { Game } from '@backend/models'
+import { RankCallout } from '@components/RankCallout'
 import { Button, ProgressBar } from '@components/system'
 import { ChartPieIcon, MapIcon } from '@heroicons/react/outline'
 import { useAppDispatch, useAppSelector } from '@redux/hook'
@@ -101,6 +102,8 @@ const StandardFinalResults: FC<Props> = ({ gameData, setGameData, view, setView 
         <div className="progress-bar">
           <ProgressBar progress={calculateProgress()} />
         </div>
+
+        {!gameData.isDailyChallenge && <RankCallout gameData={gameData} />}
 
         {IS_CHALLENGE ? (
           <div className="buttons-wrapper">

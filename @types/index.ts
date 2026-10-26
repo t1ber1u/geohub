@@ -22,6 +22,7 @@ export type { default as FeatureFlagsType } from './FeatureFlags'
 export type { default as UserBansType, BanType } from './UserBans'
 export type {
   default as MapRankingsType,
+  RankingsAttempt,
   RankingsEntry,
   RankingsMe,
   RankingsPeriod,

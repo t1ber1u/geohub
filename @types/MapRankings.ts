@@ -6,6 +6,9 @@ export type RankingsPeriod = 'today' | 'week' | 'all'
 // Games only compete against games played under the same movement rules
 export type RankingsRules = 'moving' | 'nomove' | 'nmpz'
 
+// best: each player's best game; first: only each player's first game on the map (no memorising locations)
+export type RankingsAttempt = 'best' | 'first'
+
 type RankedPlayer = {
   userId: ObjectId | string
   userName: string
@@ -38,7 +41,10 @@ export type RankingsRecords = {
 type MapRankings = {
   period: RankingsPeriod
   rules: RankingsRules
+  attempt: RankingsAttempt
   totalPlayers: number
+  // #1 of the previous day/week (same rules and attempt type), shown with a crown
+  champion: (RankedPlayer & { totalPoints: number }) | null
   entries: RankingsEntry[]
   me: RankingsMe | null
   records: RankingsRecords

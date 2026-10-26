@@ -1,12 +1,21 @@
 import { ObjectId } from 'mongodb'
 import { NextApiRequest, NextApiResponse } from 'next'
 import { collections, getUserId, throwError } from '@backend/utils'
-import { MapRankingsType, RankingsEntry, RankingsPeriod, RankingsRecords, RankingsRules } from '@types'
+import {
+  MapRankingsType,
+  RankingsAttempt,
+  RankingsEntry,
+  RankingsPeriod,
+  RankingsRecords,
+  RankingsRules,
+} from '@types'
 
 const TOP_ENTRIES = 10
 const PERFECT_ROUND_POINTS = 5000
+const DAY_MS = 24 * 60 * 60 * 1000
 const PERIODS: RankingsPeriod[] = ['today', 'week', 'all']
 const RULES: RankingsRules[] = ['moving', 'nomove', 'nmpz']
+const ATTEMPTS: RankingsAttempt[] = ['best', 'first']
 
 const RULES_QUERY: Record<RankingsRules, object> = {
   moving: { 'gameSettings.canMove': { $ne: false } },
@@ -17,9 +26,12 @@ const RULES_QUERY: Record<RankingsRules, object> = {
   nmpz: { 'gameSettings.canMove': false, 'gameSettings.canPan': false, 'gameSettings.canZoom': false },
 }
 
-// Periods reset at 00:00 UTC (weeks on Monday), the same clock the daily challenge uses
-const getPeriodStart = (period: RankingsPeriod) => {
-  if (period === 'all') return null
+type TimeWindow = { from: Date; to?: Date } | null
+
+// Periods reset at 00:00 UTC (weeks on Monday), the same clock the daily challenge uses.
+// Also returns the previous window, whose winner is the current champion.
+const getPeriodWindows = (period: RankingsPeriod): { current: TimeWindow; previous: TimeWindow } => {
+  if (period === 'all') return { current: null, previous: null }
 
   const start = new Date()
   start.setUTCHours(0, 0, 0, 0)
@@ -29,7 +41,81 @@ const getPeriodStart = (period: RankingsPeriod) => {
     start.setUTCDate(start.getUTCDate() - daysSinceMonday)
   }
 
-  return start
+  const length = period === 'week' ? 7 * DAY_MS : DAY_MS
+
+  return { current: { from: start }, previous: { from: new Date(start.getTime() - length), to: start } }
+}
+
+// Pipeline stages producing the games that compete on this board
+const competingGames = (mapId: ObjectId, rules: RankingsRules, attempt: RankingsAttempt, window: TimeWindow) => {
+  const mapGames = {
+    mapId,
+    mode: 'standard',
+    notForLeaderboard: { $ne: true },
+    // the daily challenge is played on the World map but has its own leaderboard
+    isDailyChallenge: { $ne: true },
+  }
+  const boardFilter = {
+    state: 'finished',
+    ...RULES_QUERY[rules],
+    ...(window && { createdAt: { $gte: window.from, ...(window.to && { $lt: window.to }) } }),
+  }
+
+  if (attempt === 'best') {
+    return [{ $match: { ...mapGames, ...boardFilter } }]
+  }
+
+  // A player's first game on the map, finished or not: abandoning a game to peek at the locations
+  // and starting over doesn't give a second first attempt
+  return [
+    { $match: mapGames },
+    { $sort: { createdAt: 1 } },
+    { $group: { _id: '$userId', game: { $first: '$$ROOT' } } },
+    { $replaceRoot: { newRoot: '$game' } },
+    { $match: boardFilter },
+  ]
+}
+
+// Each player's best competing game (most points, then fastest), ranked
+const rankPlayers = async (stages: object[]) => {
+  const bestGames = (await collections.games
+    ?.aggregate(
+      [
+        ...stages,
+        { $sort: { totalPoints: -1, totalTime: 1, createdAt: 1 } },
+        {
+          $group: {
+            _id: '$userId',
+            gameId: { $first: '$_id' },
+            totalPoints: { $first: '$totalPoints' },
+            totalTime: { $first: '$totalTime' },
+            timeLimit: { $first: '$gameSettings.timeLimit' },
+            achievedAt: { $first: '$createdAt' },
+            perfectRounds: {
+              $first: {
+                $size: { $filter: { input: '$guesses', cond: { $gte: ['$$this.points', PERFECT_ROUND_POINTS] } } },
+              },
+            },
+            gamesPlayed: { $sum: 1 },
+          },
+        },
+        // equal scores and times: whoever got there first is listed first
+        { $sort: { totalPoints: -1, totalTime: 1, achievedAt: 1, _id: 1 } },
+      ],
+      { allowDiskUse: true }
+    )
+    .toArray()) as any[]
+
+  // Standard competition ranking: equal points and time share a rank
+  const ranked = bestGames.map((game, idx) => ({ game, rank: idx + 1 }))
+  ranked.forEach((row, idx) => {
+    const prev = ranked[idx - 1]
+    if (prev && prev.game.totalPoints === row.game.totalPoints && prev.game.totalTime === row.game.totalTime) {
+      row.rank = prev.rank
+    }
+  })
+
+  return ranked
 }
 
 let indexReady: Promise<string> | undefined
@@ -46,8 +132,9 @@ const getMapRankings = async (req: NextApiRequest, res: NextApiResponse) => {
   const mapId = req.query.mapId as string
   const period = (req.query.period as RankingsPeriod) || 'all'
   const rules = (req.query.rules as RankingsRules) || 'moving'
+  const attempt = (req.query.attempt as RankingsAttempt) || 'best'
 
-  if (!ObjectId.isValid(mapId) || !PERIODS.includes(period) || !RULES.includes(rules)) {
+  if (!ObjectId.isValid(mapId) || !PERIODS.includes(period) || !RULES.includes(rules) || !ATTEMPTS.includes(attempt)) {
     return throwError(res, 400, 'Invalid leaderboard request')
   }
 
@@ -55,62 +142,24 @@ const getMapRankings = async (req: NextApiRequest, res: NextApiResponse) => {
   await indexReady
 
   const userId = await getUserId(req, res)
-  const periodStart = getPeriodStart(period)
+  const mapObjectId = new ObjectId(mapId)
+  const windows = getPeriodWindows(period)
+  const stages = competingGames(mapObjectId, rules, attempt, windows.current)
 
-  const gamesQuery = {
-    mapId: new ObjectId(mapId),
-    mode: 'standard',
-    state: 'finished',
-    notForLeaderboard: { $ne: true },
-    // the daily challenge is played on the World map but has its own leaderboard
-    isDailyChallenge: { $ne: true },
-    ...RULES_QUERY[rules],
-    ...(periodStart && { createdAt: { $gte: periodStart } }),
-  }
-
-  // Each player's best game: most points, then fastest
-  const bestGames = (await collections.games
-    ?.aggregate([
-      { $match: gamesQuery },
-      { $sort: { totalPoints: -1, totalTime: 1, createdAt: 1 } },
-      {
-        $group: {
-          _id: '$userId',
-          gameId: { $first: '$_id' },
-          totalPoints: { $first: '$totalPoints' },
-          totalTime: { $first: '$totalTime' },
-          timeLimit: { $first: '$gameSettings.timeLimit' },
-          achievedAt: { $first: '$createdAt' },
-          perfectRounds: {
-            $first: {
-              $size: { $filter: { input: '$guesses', cond: { $gte: ['$$this.points', PERFECT_ROUND_POINTS] } } },
-            },
-          },
-          gamesPlayed: { $sum: 1 },
-        },
-      },
-      { $sort: { totalPoints: -1, totalTime: 1 } },
-    ])
-    .toArray()) as any[]
-
-  // Standard competition ranking: equal points and time share a rank
-  const ranked = bestGames.map((game, idx) => ({ game, rank: idx + 1 }))
-  ranked.forEach((row, idx) => {
-    const prev = ranked[idx - 1]
-    if (prev && prev.game.totalPoints === row.game.totalPoints && prev.game.totalTime === row.game.totalTime) {
-      row.rank = prev.rank
-    }
-  })
+  const [ranked, records, previousRanked] = await Promise.all([
+    rankPlayers(stages),
+    getRecords(stages),
+    windows.previous ? rankPlayers(competingGames(mapObjectId, rules, attempt, windows.previous)) : [],
+  ])
 
   const myIndex = userId ? ranked.findIndex(({ game }) => game._id.toString() === userId.toString()) : -1
   const myRow = myIndex !== -1 ? ranked[myIndex] : null
   const nextRow = myRow ? ranked.slice(0, myIndex).reverse().find((row) => row.rank < myRow.rank) : undefined
-
-  const records = await getRecords(gamesQuery)
+  const championRow = previousRanked[0]
 
   const playerIds = [
     ...ranked.slice(0, TOP_ENTRIES).map(({ game }) => game._id),
-    ...[myRow?.game._id, nextRow?.game._id],
+    ...[myRow?.game._id, nextRow?.game._id, championRow?.game._id],
     ...[records.closestGuess?.userId, records.fastestPerfect?.userId, records.mostPerfect?.userId],
   ].filter(Boolean)
   const users = await getUsers(playerIds)
@@ -136,7 +185,9 @@ const getMapRankings = async (req: NextApiRequest, res: NextApiResponse) => {
   const result: MapRankingsType = {
     period,
     rules,
+    attempt,
     totalPlayers: ranked.length,
+    champion: championRow ? withUser({ userId: championRow.game._id, totalPoints: championRow.game.totalPoints }) : null,
     entries: ranked.slice(0, TOP_ENTRIES).map(toEntry),
     me: myRow
       ? {
@@ -162,36 +213,39 @@ const getMapRankings = async (req: NextApiRequest, res: NextApiResponse) => {
 }
 
 // Round-level records across the same games the leaderboard ranks
-const getRecords = async (gamesQuery: object) => {
+const getRecords = async (stages: object[]) => {
   const [records] = (await collections.games
-    ?.aggregate([
-      { $match: gamesQuery },
-      { $unwind: '$guesses' },
-      // rounds that timed out without a pin have no real guess
-      { $match: { $or: [{ 'guesses.timedOut': { $ne: true } }, { 'guesses.timedOutWithGuess': true }] } },
-      {
-        $facet: {
-          closestGuess: [
-            { $sort: { 'guesses.distance.metric': 1, createdAt: 1 } },
-            { $limit: 1 },
-            { $project: { _id: 0, userId: 1, gameId: '$_id', distance: '$guesses.distance' } },
-          ],
-          fastestPerfect: [
-            { $match: { 'guesses.points': { $gte: PERFECT_ROUND_POINTS } } },
-            { $sort: { 'guesses.time': 1, createdAt: 1 } },
-            { $limit: 1 },
-            { $project: { _id: 0, userId: 1, gameId: '$_id', time: '$guesses.time' } },
-          ],
-          mostPerfect: [
-            { $match: { 'guesses.points': { $gte: PERFECT_ROUND_POINTS } } },
-            { $group: { _id: '$userId', count: { $sum: 1 }, firstAt: { $min: '$createdAt' } } },
-            { $sort: { count: -1, firstAt: 1 } },
-            { $limit: 1 },
-            { $project: { _id: 0, userId: '$_id', count: 1 } },
-          ],
+    ?.aggregate(
+      [
+        ...stages,
+        { $unwind: '$guesses' },
+        // rounds that timed out without a pin have no real guess
+        { $match: { $or: [{ 'guesses.timedOut': { $ne: true } }, { 'guesses.timedOutWithGuess': true }] } },
+        {
+          $facet: {
+            closestGuess: [
+              { $sort: { 'guesses.distance.metric': 1, createdAt: 1 } },
+              { $limit: 1 },
+              { $project: { _id: 0, userId: 1, gameId: '$_id', distance: '$guesses.distance' } },
+            ],
+            fastestPerfect: [
+              { $match: { 'guesses.points': { $gte: PERFECT_ROUND_POINTS } } },
+              { $sort: { 'guesses.time': 1, createdAt: 1 } },
+              { $limit: 1 },
+              { $project: { _id: 0, userId: 1, gameId: '$_id', time: '$guesses.time' } },
+            ],
+            mostPerfect: [
+              { $match: { 'guesses.points': { $gte: PERFECT_ROUND_POINTS } } },
+              { $group: { _id: '$userId', count: { $sum: 1 }, firstAt: { $min: '$createdAt' } } },
+              { $sort: { count: -1, firstAt: 1 } },
+              { $limit: 1 },
+              { $project: { _id: 0, userId: '$_id', count: 1 } },
+            ],
+          },
         },
-      },
-    ])
+      ],
+      { allowDiskUse: true }
+    )
     .toArray()) as any[]
 
   return {

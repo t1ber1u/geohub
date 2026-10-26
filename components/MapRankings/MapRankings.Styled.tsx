@@ -23,7 +23,7 @@ const StyledMapRankings = styled.div`
   }
 
   .title-row,
-  .rules-row {
+  .filters-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -31,11 +31,53 @@ const StyledMapRankings = styled.div`
     flex-wrap: wrap;
   }
 
+  .title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
   .title {
     font-size: 1.125rem;
 
     @media (max-width: 1000px) {
       font-size: 1rem;
+    }
+  }
+
+  .help-button {
+    display: flex;
+    padding: 2px;
+    border-radius: 50%;
+    background: transparent;
+    color: #777;
+
+    svg {
+      height: 20px;
+    }
+
+    &:hover,
+    &.active {
+      color: var(--indigo-400);
+    }
+  }
+
+  .help-panel {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 12px 14px 12px 30px;
+    border-radius: 6px;
+    background-color: #111;
+    border: var(--border);
+    color: var(--color3);
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.45;
+
+    strong {
+      color: var(--color2);
+      font-weight: 600;
     }
   }
 
@@ -64,6 +106,12 @@ const StyledMapRankings = styled.div`
         background-color: #2c2c30;
         color: #fff;
       }
+    }
+
+    &.small button {
+      height: 26px;
+      padding: 0 10px;
+      font-size: 13px;
     }
   }
 
@@ -95,9 +143,57 @@ const StyledMapRankings = styled.div`
   }
 
   .players-count {
+    margin-top: -4px;
     color: var(--color4);
     font-size: 13px;
     font-weight: 400;
+  }
+
+  .crown {
+    display: inline-flex;
+    flex-shrink: 0;
+    color: #fbbf24;
+
+    svg {
+      height: 16px;
+    }
+  }
+
+  .champion-strip {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 20px;
+    border-bottom: var(--border);
+    background: linear-gradient(90deg, rgba(251, 191, 36, 0.12), rgba(251, 191, 36, 0) 70%);
+    font-size: 14px;
+    font-weight: 400;
+
+    .crown svg {
+      height: 18px;
+    }
+
+    .champion-label {
+      color: var(--color3);
+    }
+
+    .champion-name {
+      color: #fde68a;
+      font-weight: 600;
+
+      &:hover {
+        color: #fff;
+      }
+    }
+
+    .champion-points {
+      color: var(--color4);
+    }
+
+    @media (max-width: 1000px) {
+      padding: 10px 16px;
+    }
   }
 
   .rankings-body {
@@ -117,6 +213,10 @@ const StyledMapRankings = styled.div`
 
     &:not(:first-child) {
       border-top: var(--border);
+    }
+
+    &:hover:not(.is-me) {
+      background-color: rgba(255, 255, 255, 0.02);
     }
 
     &.is-me {
@@ -188,13 +288,16 @@ const StyledMapRankings = styled.div`
     min-width: 0;
     color: var(--color2);
     font-size: 15px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 
     &:hover {
       color: #fff;
     }
+  }
+
+  .player-name-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .you-tag {
@@ -301,11 +404,23 @@ const StyledMapRankings = styled.div`
     background-repeat: repeat-x;
   }
 
-  .empty-message {
-    display: block;
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
     padding: 20px;
     color: var(--color4);
     font-weight: 400;
+
+    .empty-play-button {
+      padding: 0 16px;
+    }
+
+    @media (max-width: 1000px) {
+      padding: 16px;
+    }
   }
 
   .my-summary {

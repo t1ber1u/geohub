@@ -24,7 +24,10 @@ const StandardGameView: FC<Props> = ({ gameData, setGameData, view, setView }) =
         <StreetView gameData={gameData} setGameData={setGameData} view={view} setView={setView} />
       </div>
 
-      <div className="results-wrapper" style={{ display: RESULT_VIEWS.includes(view) ? 'grid' : 'none' }}>
+      <div
+        className={`results-wrapper ${view === 'FinalResults' ? 'final' : ''}`}
+        style={{ display: RESULT_VIEWS.includes(view) ? 'grid' : 'none' }}
+      >
         <ResultMap
           guessedLocations={gameData.guesses}
           actualLocations={gameData.rounds}

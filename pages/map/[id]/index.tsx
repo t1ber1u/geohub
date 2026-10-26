@@ -120,7 +120,7 @@ const MapPage: FC = () => {
           <SkeletonMapInfo />
         )}
 
-        {typeof mapId === 'string' && <MapRankings mapId={mapId} />}
+        {typeof mapId === 'string' && <MapRankings mapId={mapId} onPlay={handleClickPlay} />}
 
         {otherMaps ? (
           <div className="otherMapsWrapper">

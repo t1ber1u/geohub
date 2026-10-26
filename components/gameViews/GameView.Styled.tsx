@@ -15,6 +15,11 @@ const StyledGameView = styled.div`
     display: grid;
     grid-template-rows: calc(100% - 250px);
 
+    // room for the leaderboard standings under the final score
+    &.final {
+      grid-template-rows: calc(100% - 310px);
+    }
+
     .results-card-wrapper {
       display: flex;
       align-items: center;
