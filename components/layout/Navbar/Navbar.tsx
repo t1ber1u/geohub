@@ -1,7 +1,8 @@
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { FC, useState } from 'react'
-import { Avatar, Button, Searchbar } from '@components/system'
+import { UserMenu } from '@components/dropdowns/UserMenu'
+import { Button, Searchbar } from '@components/system'
 import { SearchIcon } from '@heroicons/react/outline'
 import { useAppSelector } from '../../../redux-utils'
 import { AppLogo } from '../../AppLogo'
@@ -40,12 +41,10 @@ const Navbar: FC = () => {
               </button>
 
               {session && user.id ? (
-                <Link href={`/user/${user.id}`}>
-                  <a className="userInfo">
-                    <span className="username">{user.name}</span>
-                    <Avatar type="user" src={user.avatar.emoji} backgroundColor={user.avatar.color} />
-                  </a>
-                </Link>
+                // on desktop the account menu lives in the sidebar footer; the sidebar is hidden on mobile
+                <div className="navbar-user-menu">
+                  <UserMenu variant="navbar" />
+                </div>
               ) : (
                 <>
                   <Link href="/login">

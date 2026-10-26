@@ -98,26 +98,11 @@ const StyledNavbar = styled.div`
     }
   }
 
-  .userInfo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+  .navbar-user-menu {
+    display: none;
 
-  .username {
-    color: #bec3c9;
-    font-size: 16px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 250px;
-
-    @media (max-width: 800px) {
-      font-size: 1rem;
-    }
-
-    @media (max-width: 500px) {
-      display: none;
+    @media (max-width: 600px) {
+      display: block;
     }
   }
 

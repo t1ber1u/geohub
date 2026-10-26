@@ -160,89 +160,36 @@ const StyledSidebar = styled.div`
     }
   }
 
-  .support-link {
-    background-color: #333;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    color: #fff;
-    display: flex;
-    position: relative;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    border-radius: 5px;
-    height: 40px;
-    padding: 0 10px;
-    font-size: 1rem;
-    font-weight: 400;
-    user-select: none;
-
-    &:hover {
-      background-color: #404040;
-    }
-
-    svg {
-      height: 20px;
-      position: relative;
-      top: -1px;
-    }
-  }
-
   .sidebar-footer {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 8px;
+    padding: 4px;
     border-top: 1px solid #262626;
   }
 
-  .social-links {
+  .login-link {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 4px;
+    color: #8b8f93;
+    font-size: 14px;
 
-    .social-link {
-      height: 20px;
-
-      &:hover {
-        svg {
-          fill: #777;
-        }
-      }
-
-      svg {
-        height: 100%;
-        fill: #555;
-      }
-    }
-  }
-
-  @media (max-width: 1200px) {
-    .sidebar-footer {
-      flex-direction: column;
+    &:hover {
+      background-color: #2a2a2f;
+      color: var(--color2);
     }
 
-    .support-link {
-      background-color: transparent;
-      border: none;
+    svg {
+      height: 22px;
       color: #555;
-      height: 20px;
+    }
 
-      &:hover {
-        background-color: transparent;
-        color: #777;
-      }
-
-      svg {
-        height: 24px;
-      }
+    @media (max-width: 1200px) {
+      justify-content: center;
 
       span {
         display: none;
       }
-    }
-
-    .social-links {
-      flex-direction: column;
     }
   }
 `
