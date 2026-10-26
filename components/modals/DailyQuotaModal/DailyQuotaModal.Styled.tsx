@@ -84,15 +84,6 @@ const StyledDailyQuotaModal = styled.div<StyledProps>`
       &:hover {
         background-color: var(--indigo-600);
       }
-
-      &.donate {
-        background-color: rgb(255, 255, 255, 0.1);
-        color: #fff;
-
-        &:hover {
-          background-color: rgb(255, 255, 255, 0.15);
-        }
-      }
     }
   }
 

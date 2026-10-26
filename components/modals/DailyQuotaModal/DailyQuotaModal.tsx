@@ -56,14 +56,6 @@ const DailyQuotaModal: FC<Props> = ({ isOpen, closeModal }) => {
             <Link href="/user/settings">
               <a className="support-link">Add Key</a>
             </Link>
-            <a
-              className="support-link donate"
-              href="https://www.buymeacoffee.com/geohubgame"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Donate
-            </a>
           </div>
 
           <div className="checkbox-wrapper">
