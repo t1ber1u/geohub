@@ -20,3 +20,11 @@ export type { default as GoogleMapsConfigType } from './GoogleMapsConfig'
 export type { default as UserGameHistoryType } from './UserGameHistory'
 export type { default as FeatureFlagsType } from './FeatureFlags'
 export type { default as UserBansType, BanType } from './UserBans'
+export type {
+  default as MapRankingsType,
+  RankingsEntry,
+  RankingsMe,
+  RankingsPeriod,
+  RankingsRecords,
+  RankingsRules,
+} from './MapRankings'

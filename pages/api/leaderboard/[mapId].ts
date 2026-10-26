@@ -1,6 +1,6 @@
 /* eslint-disable import/no-anonymous-default-export */
 import { NextApiRequest, NextApiResponse } from 'next'
-import getGameScores from '@backend/routes/scores/getGameScores'
+import getMapRankings from '@backend/routes/maps/getMapRankings'
 import { dbConnect } from '@backend/utils'
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -9,7 +9,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
     switch (req.method) {
       case 'GET':
-        return getGameScores(req, res)
+        return getMapRankings(req, res)
       default:
         res.status(405).end(`Method ${req.method} Not Allowed`)
     }

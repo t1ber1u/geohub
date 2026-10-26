@@ -3,24 +3,23 @@ import { useRouter } from 'next/router'
 import { FC, useEffect, useState } from 'react'
 import { NotFound } from '@components/errorViews'
 import { WidthController } from '@components/layout'
-import { MapLeaderboard } from '@components/MapLeaderboard'
 import { MapPreviewCard } from '@components/MapPreviewCard'
+import { MapRankings } from '@components/MapRankings'
 import { MapStats } from '@components/MapStats'
 import { Meta } from '@components/Meta'
 import { GameSettingsModal } from '@components/modals'
-import { SkeletonCards, SkeletonLeaderboard, SkeletonMapInfo } from '@components/skeletons'
+import { SkeletonCards, SkeletonMapInfo } from '@components/skeletons'
 import { Avatar, Button } from '@components/system'
 import { TextWithLinks } from '@components/TextWithLinks'
 import { VerifiedBadge } from '@components/VerifiedBadge'
 import { useAppSelector } from '@redux/hook'
 import StyledMapPage from '@styles/MapPage.Styled'
-import { MapLeaderboardType, MapType } from '@types'
+import { MapType } from '@types'
 import { mailman, showToast } from '@utils/helpers'
 
 const MapPage: FC = () => {
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const [mapDetails, setMapDetails] = useState<MapType | null>()
-  const [leaderboardData, setLeaderboardData] = useState<MapLeaderboardType[] | null>()
   const [otherMaps, setOtherMaps] = useState<MapType[] | null>()
 
   const router = useRouter()
@@ -33,7 +32,6 @@ const MapPage: FC = () => {
     }
 
     fetchMapDetails()
-    fetchMapScores()
     fetchOtherMaps()
   }, [mapId])
 
@@ -45,16 +43,6 @@ const MapPage: FC = () => {
     }
 
     setMapDetails(res)
-  }
-
-  const fetchMapScores = async () => {
-    const res = await mailman(`scores/${mapId}`)
-
-    if (res.error) {
-      return showToast('error', res.error.message)
-    }
-
-    setLeaderboardData(res)
   }
 
   const fetchOtherMaps = async () => {
@@ -132,7 +120,7 @@ const MapPage: FC = () => {
           <SkeletonMapInfo />
         )}
 
-        {leaderboardData ? <MapLeaderboard leaderboard={leaderboardData} /> : <SkeletonLeaderboard />}
+        {typeof mapId === 'string' && <MapRankings mapId={mapId} />}
 
         {otherMaps ? (
           <div className="otherMapsWrapper">

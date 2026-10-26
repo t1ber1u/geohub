@@ -25,8 +25,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
     const { game } = req.body
 
+    // regular map leaderboards are computed live from games (see getMapRankings)
     if (game.mode === 'standard' && !game.isDailyChallenge) {
-      await updateMapLeaderboard(game)
       await updateMapStats(game)
     }
 
@@ -166,24 +166,6 @@ const updateMapStats = async (game: Game) => {
   const roundedAvgScore = Math.ceil(avgScore)
 
   await collections.maps?.updateOne({ _id: mapId }, { $set: { avgScore: roundedAvgScore, usersPlayed: explorers } })
-}
-
-const updateMapLeaderboard = async (game: Game) => {
-  const mapId = new ObjectId(game.mapId)
-  const mapLeaderboard = await collections.mapLeaderboard?.findOne({ mapId })
-
-  const topScores = mapLeaderboard?.scores
-  const leaderboardNeedsMoreScores = topScores?.length && topScores.length < LEADERBOARD_LENGTH
-  const lowestTopScore = topScores?.length
-    ? topScores.reduce((min, score) => Math.min(min, score.totalPoints), Infinity)
-    : 0
-
-  if (game.totalPoints >= lowestTopScore || leaderboardNeedsMoreScores) {
-    const query = { mapId, round: 6 }
-    const newTopScores = await queryTopScores(query, LEADERBOARD_LENGTH)
-
-    await collections.mapLeaderboard?.findOneAndUpdate({ mapId }, { $set: { scores: newTopScores } }, { upsert: true })
-  }
 }
 
 // COUNTRY STREAKS
